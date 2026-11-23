@@ -48,28 +48,28 @@
       "simple": {
         "size": "≈18 GiB",
         "size_gib": 18.2,
-        "about": "Answers questions and helps with code.",
+        "about": "Best choice for agentic coding with tools.",
         "rank": {
-          "code": 1,
+          "agent": 1,
           "chat": 1
         },
-        "speed": "Measured on this Mac: about 55–65 tokens per second."
+        "speed": "Measured on this Mac: about 55–65 tokens per second. Tool calls: 6 of 6 valid in our test on this Mac."
       }
     },
     "qwen36-35b-a3b-4bit": {
-      "label": "Qwen 3.6 35B-A3B, 4-bit (MLX)",
+      "label": "Qwen 3.6 35B-A3B, OptiQ 4-bit (MLX)",
       "engine": "mlx",
-      "repo": "mlx-community/Qwen3.6-35B-A3B-4bit",
-      "notes": "19 GiB. Mixture of experts: faster per token, good for chat.",
+      "repo": "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit",
+      "notes": "Mixture of experts, about 22 GiB. OptiQ build: tool calls stayed valid in community tests.",
       "simple": {
-        "size": "≈19 GiB",
-        "size_gib": 19.0,
-        "about": "Mixture-of-experts model. Good for code and chat.",
+        "size": "≈22 GiB",
+        "size_gib": 21.9,
+        "about": "Second choice for agentic coding. Fast mixture of experts.",
         "rank": {
-          "code": 2,
+          "agent": 2,
           "chat": 4
         },
-        "speed": "Not measured on an M4 Pro yet."
+        "speed": "Not measured on an M4 Pro yet. Tool calls: 100% valid in community tests (M4 Max); the plain 4-bit build failed 17% of calls."
       }
     },
     "ornith-9b-4bit": {
@@ -87,21 +87,6 @@
         "speed": "Not measured on this Mac yet."
       }
     },
-    "gemma4-26b-4bit": {
-      "label": "Gemma 4 26B, 4-bit (MLX)",
-      "engine": "mlx",
-      "repo": "mlx-community/gemma-4-26b-a4b-it-4bit",
-      "notes": "Mixture of experts, about 14 GiB.",
-      "simple": {
-        "size": "≈14 GiB",
-        "size_gib": 14.3,
-        "about": "Fast mixture-of-experts model for chat.",
-        "rank": {
-          "chat": 2
-        },
-        "speed": "Community measurement on an M4 Pro 48 GB: about 76 tokens per second. Not measured on this Mac yet."
-      }
-    },
     "gpt-oss-20b-mxfp4-q8": {
       "label": "GPT-OSS 20B, MXFP4 (MLX)",
       "engine": "mlx",
@@ -110,7 +95,7 @@
       "simple": {
         "size": "≈11 GiB",
         "size_gib": 11.3,
-        "about": "Open model from OpenAI. Fast for chat.",
+        "about": "Open model from OpenAI. Fast for chat; tool use not tested here.",
         "rank": {
           "chat": 3
         },

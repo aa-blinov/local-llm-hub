@@ -8,7 +8,7 @@ import subprocess
 
 HEADROOM_GIB = 4.0   # room for the cache and the system beyond the weights
 USABLE_SHARE = 0.75  # do not plan to use more than this share of total memory
-PURPOSES = {"code": "coding", "chat": "chat", "quick": "quick answers"}
+PURPOSES = {"agent": "agentic coding", "chat": "chat", "quick": "quick answers"}
 
 
 def memory_gib() -> float | None:
