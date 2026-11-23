@@ -114,6 +114,13 @@ function fillCatalog(c) {
   for (const [k, label] of Object.entries(SIMPLE_PRESETS)) if (c.presets[k]) sp.add(new Option(label, k));
   sp.value = "chat";
   sm.onchange = () => { renderSimple(); refreshPreflight(); };
+  $("s-purpose").onchange = refreshRecommend;
+  $("s-recommend-btn").onclick = () => {
+    if (!recommendedKey) return;
+    sm.value = recommendedKey;
+    sm.onchange();
+  };
+  refreshRecommend();
   sp.onchange = () => { renderSimple(); refreshPreflight(); };
   $("s-engine-btn").onclick = installEngineForSimple;
   $("s-model-btn").onclick = () => startModelDownload($("s-model").value);
@@ -735,6 +742,16 @@ $("hf-add").onclick = async () => {
   catalog = await api("/api/catalog");
   loadComponents(); loadUserModels();
 };
+
+// ---- recommended model for this Mac ----
+let recommendedKey = null;
+async function refreshRecommend() {
+  const purpose = $("s-purpose").value;
+  const r = await api(`/api/recommend?purpose=${encodeURIComponent(purpose)}`);
+  recommendedKey = r.ok ? r.key : null;
+  $("s-recommend").textContent = r.ok ? `Recommended: ${r.label}. ${r.reason}` : (r.message || "No recommendation.");
+  $("s-recommend-btn").hidden = !r.ok || r.key === $("s-model").value;
+}
 
 // ---- start ----
 loadSettings().then(() => route());

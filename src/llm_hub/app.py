@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from .components import Components, Jobs
 from .config import load, load_user_models, save_model_dirs
 from .usermodels import ModelAddError, add_user_model, remove_user_model
+from .recommend import memory_gib, recommend
 from .downloads import DownloadManager
 
 
@@ -99,6 +100,16 @@ def create_app() -> FastAPI:
         ver = int((STATIC / "app.js").stat().st_mtime)
         html = re.sub(r"/static/app\.js\?v=\d+", f"/static/app.js?v={ver}", html)
         return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
+    @app.get("/api/recommend")
+    def recommend_model(purpose: str = "code"):
+        cands = []
+        for key, m in reg.models.items():
+            simple = m.simple or {}
+            if simple.get("rank") and simple.get("size_gib") is not None:
+                cands.append({"key": key, "label": m.label, "size_gib": float(simple["size_gib"]),
+                              "rank": simple["rank"], "speed": simple.get("speed", "")})
+        return recommend(cands, purpose, memory_gib())
 
     @app.get("/api/catalog")
     def catalog():
