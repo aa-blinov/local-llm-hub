@@ -17,7 +17,12 @@ OPENCODE_CONFIG = Path.home() / ".config" / "opencode" / "opencode.jsonc"
 
 
 def _expand(p: str | None) -> Path | None:
-    return Path(os.path.expanduser(p)) if p else None
+    """Expand ~ and resolve ./ against the project folder, so the registry works after cloning anywhere."""
+    if not p:
+        return None
+    if p.startswith("./"):
+        return ROOT / p[2:]
+    return Path(os.path.expanduser(p))
 
 
 @dataclass
@@ -31,6 +36,7 @@ class Model:
     notes: str
     found: Path | None = None  # path found by scanning model folders
     origin: str = "registry"   # registry | folder
+    simple: dict | None = None  # optional block for the Simple view: size, about, recommended
 
     def resolve(self) -> Path | None:
         """Path to the model files: explicit path, folder scan result, or Hugging Face cache snapshot."""
@@ -118,7 +124,8 @@ def load(path: Path = REGISTRY_PATH) -> Registry:
         if v["engine"] not in engines:
             raise ValueError(f"model {k}: unknown engine {v['engine']}")
         base[k] = Model(k, v["label"], v["engine"], v.get("repo"), _expand(v.get("path")),
-                        _expand(v.get("mmproj")), v.get("notes", ""))
+                        _expand(v.get("mmproj")), v.get("notes", ""),
+                        simple=v.get("simple"))
     reg = Registry(
         port=int(data.get("port", 8000)),
         ui_port=int(data.get("ui_port", 8765)),

@@ -42,14 +42,6 @@ let dlTimer = null;
 let jobWatch = null;
 
 // Labels for the simple view. Keys come from config/registry.json.
-// Only these models appear in the Simple view. Names come from config/registry.json,
-// so each model has one name in every section.
-const SIMPLE_MODELS = {
-  "ornith-4bit": { size: "≈18 GiB", about: "Recommended. Answers questions and helps with code." },
-  "qwen36-27b-4bit": { size: "≈15 GiB", about: "Strong for code, but slower per answer." },
-  "qwen36-35b-a3b-4bit": { size: "≈19 GiB", about: "Faster per answer. Good for everyday chat." },
-  "ornith-9b-4bit": { size: "≈5 GiB", about: "Small and quick. For simple questions and checks." },
-};
 const SIMPLE_PRESETS = {
   chat: "Chat — for conversations and questions (quick start)",
   coding: "Coding — for working with code (remembers more text)",
@@ -142,7 +134,7 @@ function rebuildSimpleModels(selected) {
   const keep = selected || sm.value;
   sm.innerHTML = "";
   for (const [k, info] of Object.entries(catalog.models)) {
-    if (!(k in SIMPLE_MODELS) && !info.exists) continue;
+    if (!info.simple && !info.exists) continue;
     sm.add(new Option(info.label, k));
   }
   sm.value = [...sm.options].some((o) => o.value === keep) ? keep : (sm.options[0] ? sm.options[0].value : "");
@@ -349,7 +341,7 @@ async function syncOpencode() {
 async function startModelDownload(key) {
   const info = catalog.models[key];
   if (!info) return;
-  const size = (SIMPLE_MODELS[key] || {}).size || "";
+  const size = (info.simple || {}).size || "";
   if (!confirm(`Download "${info.label}"${size ? " (" + size + ")" : ""}? It can take 10 to 40 minutes. You can close this window; the download continues.`)) return;
   const r = await api("/api/download", { model: key });
   if (!r.ok) { $("s-model-text").textContent = friendly(r.error); $("dlstate").textContent = friendly(r.error); return; }
@@ -429,7 +421,7 @@ function renderSimple() {
 
   // step 2
   $("st-model").classList.toggle("done", modelOk);
-  const sm = SIMPLE_MODELS[model] || {};
+  const sm = (catalog.models[model] || {}).simple || {};
   $("s-model-info").textContent = info ? `${sm.size || ""}. ${sm.about || ""}` : "";
   if (modelOk) {
     $("s-model-text").innerHTML = '<span class="good">Model downloaded</span>';

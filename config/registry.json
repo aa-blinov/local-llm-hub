@@ -13,7 +13,7 @@
   "engines": {
     "mlx": {
       "label": "MLX (mlx_vlm.server)",
-      "binary": "~/local-llm-hub/.venv/bin/mlx_vlm.server",
+      "binary": "./.venv/bin/mlx_vlm.server",
       "ctx_choices": [
         32768,
         65536,
@@ -29,7 +29,7 @@
     },
     "llamacpp": {
       "label": "llama.cpp (llama-server, Metal)",
-      "binary": "~/local-llm-hub/engines/llama.cpp/bin/llama-server",
+      "binary": "./engines/llama.cpp/bin/llama-server",
       "ctx_choices": [
         8192,
         32768,
@@ -44,25 +44,42 @@
       "label": "Ornith 1.5 35B-A3B, 4-bit (MLX)",
       "engine": "mlx",
       "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-4bit",
-      "notes": "18 GiB of weights, 128k context. Measured about 55–65 tokens/s on this Mac. Default for coding."
+      "notes": "18 GiB of weights, 128k context. Measured about 55–65 tokens/s on this Mac. Default for coding.",
+      "simple": {
+        "size": "≈18 GiB",
+        "about": "Recommended. Answers questions and helps with code.",
+        "recommended": true
+      }
     },
     "qwen36-27b-4bit": {
       "label": "Qwen 3.6 27B, 4-bit (MLX)",
       "engine": "mlx",
       "repo": "mlx-community/Qwen3.6-27B-4bit",
-      "notes": "15 GiB. Dense model, often rated the strongest for code. Slower per token than Ornith."
+      "notes": "15 GiB. Dense model, often rated the strongest for code. Slower per token than Ornith.",
+      "simple": {
+        "size": "≈15 GiB",
+        "about": "Strong for code, but slower per answer."
+      }
     },
     "qwen36-35b-a3b-4bit": {
       "label": "Qwen 3.6 35B-A3B, 4-bit (MLX)",
       "engine": "mlx",
       "repo": "mlx-community/Qwen3.6-35B-A3B-4bit",
-      "notes": "19 GiB. Mixture of experts: faster per token, good for chat."
+      "notes": "19 GiB. Mixture of experts: faster per token, good for chat.",
+      "simple": {
+        "size": "≈19 GiB",
+        "about": "Faster per answer. Good for everyday chat."
+      }
     },
     "ornith-9b-4bit": {
       "label": "Ornith 1.5 9B, 4-bit (MLX)",
       "engine": "mlx",
       "repo": "ornith-ai/Ornith-1.5-9B-MLX-4bit",
-      "notes": "4.7 GiB. Small and fast, for quick checks and simple questions."
+      "notes": "4.7 GiB. Small and fast, for quick checks and simple questions.",
+      "simple": {
+        "size": "≈5 GiB",
+        "about": "Small and quick. For simple questions and checks."
+      }
     }
   },
   "presets": {

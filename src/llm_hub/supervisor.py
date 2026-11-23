@@ -174,7 +174,7 @@ class Supervisor:
 
     def catalog(self) -> dict:
         models = {k: {"label": m.label, "engine": m.engine, "exists": m.exists, "notes": m.notes,
-                      "repo": m.repo, "can_download": bool(m.repo)}
+                      "repo": m.repo, "can_download": bool(m.repo), "simple": m.simple}
                   for k, m in self.reg.models.items()}
         engines = {k: {"label": e.label, "ctx_choices": e.ctx_choices, "prefill_choices": e.prefill_choices,
                        "binary_ok": e.binary.exists()} for k, e in self.reg.engines.items()}
