@@ -1,0 +1,104 @@
+{
+  "port": 8000,
+  "ui_port": 8765,
+  "autostart": true,
+  "default": {
+    "model": "ornith-4bit",
+    "ctx": 131072,
+    "prefill": 512,
+    "apc": true,
+    "apc_mem_gb": 6,
+    "ngl": 999
+  },
+  "engines": {
+    "mlx": {
+      "label": "MLX (mlx_vlm.server)",
+      "binary": "~/local-llm-hub/.venv/bin/mlx_vlm.server",
+      "ctx_choices": [
+        32768,
+        65536,
+        131072,
+        262144
+      ],
+      "prefill_choices": [
+        256,
+        512,
+        1024,
+        2048
+      ]
+    },
+    "llamacpp": {
+      "label": "llama.cpp (llama-server, Metal)",
+      "binary": "~/local-llm-hub/engines/llama.cpp/bin/llama-server",
+      "ctx_choices": [
+        8192,
+        32768,
+        65536,
+        131072
+      ],
+      "prefill_choices": []
+    }
+  },
+  "models": {
+    "ornith-4bit": {
+      "label": "Ornith 1.5 35B-A3B, 4-bit MLX",
+      "engine": "mlx",
+      "path": "~/.cache/huggingface/hub/models--ornith-ai--Ornith-1.5-35B-A3B-MLX-4bit/snapshots/19504d912fa8fc7622bf6b1de3db5d5d890b1f02",
+      "notes": "18 ГБ весов, 128k, около 55–65 tok/s, для кодинга в opencode",
+      "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-4bit"
+    },
+    "ornith-6bit": {
+      "label": "Ornith 1.5 35B-A3B, 6-bit MLX",
+      "engine": "mlx",
+      "path": "~/.cache/huggingface/hub/models--ornith-ai--Ornith-1.5-35B-A3B-MLX-6bit/snapshots/585b7867b0517980293ece857b26d64e84491352",
+      "notes": "26 ГБ весов, качество выше, около 57–66 tok/s",
+      "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-6bit"
+    },
+    "inkling-4-8bit": {
+      "label": "Inkling 2 Mini, 4-8bit MLX (netprojects)",
+      "engine": "mlx",
+      "path": "~/.cache/huggingface/hub/models--netprojects--Inkling-2-Mini-MLX-4-8bit/snapshots/0b437271c7982a8b7acdca011170dcc86b671b20",
+      "notes": "20 ГБ весов, около 27 tok/s на длинных ответах",
+      "repo": "netprojects/Inkling-2-Mini-MLX-4-8bit"
+    },
+    "inkling-gguf-q4km": {
+      "label": "Inkling 2 Mini, Q4_K_M GGUF (+ vision)",
+      "engine": "llamacpp",
+      "path": "~/.lmstudio/models/lmstudio-community/Inkling-2-Mini-GGUF/Inkling-2-Mini-Q4_K_M.gguf",
+      "mmproj": "~/.lmstudio/models/lmstudio-community/Inkling-2-Mini-GGUF/mmproj-Inkling-2-Mini-BF16.gguf",
+      "notes": "17 ГБ, нужна сборка llama.cpp с inkling2_loop (upstream, не Homebrew)"
+    },
+    "smoke-qwen-0.5b": {
+      "label": "Тест: Qwen2.5 0.5B, 4-bit MLX (290 МБ, для проверки)",
+      "engine": "mlx",
+      "repo": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "notes": "Маленькая модель для проверки скачивания и запуска"
+    }
+  },
+  "presets": {
+    "coding": {
+      "label": "Кодинг: 128k, кэш префиксов",
+      "model": "ornith-4bit",
+      "ctx": 131072,
+      "prefill": 512,
+      "apc": true,
+      "apc_mem_gb": 6
+    },
+    "chat": {
+      "label": "Чат: 32k, без кэша, быстрый старт",
+      "model": "ornith-4bit",
+      "ctx": 32768,
+      "prefill": 1024,
+      "apc": false
+    },
+    "long": {
+      "label": "Длинный контекст: 262k (проверяйте память)",
+      "model": "ornith-4bit",
+      "ctx": 262144,
+      "prefill": 512,
+      "apc": true,
+      "apc_mem_gb": 6
+    }
+  },
+  "model_dirs": []
+}

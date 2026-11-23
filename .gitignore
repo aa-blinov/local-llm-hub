@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+logs/
+cache/
+engines/llama.cpp/
+*.log
+.DS_Store
+config/settings.json
+config/*.tmp
+.impeccable/hook.cache.json
+.playwright-mcp/

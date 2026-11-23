@@ -1,0 +1,19 @@
+[project]
+name = "local-llm-hub"
+version = "0.1.0"
+description = "Веб-панель для запуска локальных LLM на Apple Silicon: выбор движка (MLX / llama.cpp), модели и параметров."
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_hub"]

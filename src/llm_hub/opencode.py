@@ -1,0 +1,77 @@
+"""Синхронизация провайдера в конфиге opencode.
+
+Трогаем только блок provider.local-hub. Остальные ключи (провайдеры, MCP) не меняем.
+Перед записью делаем резервную копию opencode.jsonc.bak-<время>.
+"""
+import json
+import shutil
+import time
+from pathlib import Path
+
+from .config import OPENCODE_CONFIG, Registry
+from .engines import make_adapter
+
+PROVIDER = "local-hub"
+
+
+def _load() -> dict:
+    if not OPENCODE_CONFIG.exists():
+        return {"$schema": "https://opencode.ai/config.json"}
+    text = OPENCODE_CONFIG.read_text(encoding="utf-8")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"конфиг opencode не разбирается как JSON (есть комментарии?): {e}")
+
+
+def _model_id(reg: Registry, key: str) -> str | None:
+    m = reg.models[key]
+    if m.engine == "mlx":
+        p = m.resolve()
+        return str(p) if p else None
+    return key
+
+
+def status_config(reg: Registry) -> dict:
+    try:
+        cfg = _load()
+    except ValueError as e:
+        return {"ok": False, "error": str(e), "path": str(OPENCODE_CONFIG)}
+    block = cfg.get("provider", {}).get(PROVIDER)
+    return {
+        "ok": True,
+        "path": str(OPENCODE_CONFIG),
+        "configured": block is not None,
+        "models": list((block or {}).get("models", {}).keys()),
+        "base_url": (block or {}).get("options", {}).get("baseURL"),
+    }
+
+
+def sync_config(reg: Registry, sup) -> dict:
+    try:
+        cfg = _load()
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+    ctx = (sup.opts or {}).get("ctx") or reg.default.get("ctx", 131072)
+    models = {}
+    for key, m in reg.models.items():
+        mid = _model_id(reg, key)
+        if mid is None:
+            continue
+        models[mid] = {
+            "name": m.label,
+            "limit": {"context": int(ctx), "output": 8192},
+        }
+    block = {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "Local LLM Hub",
+        "options": {"baseURL": f"http://127.0.0.1:{reg.port}/v1", "apiKey": "local"},
+        "models": models,
+    }
+    cfg.setdefault("provider", {})[PROVIDER] = block
+    OPENCODE_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    if OPENCODE_CONFIG.exists():
+        backup = OPENCODE_CONFIG.with_name(f"{OPENCODE_CONFIG.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
+        shutil.copy2(OPENCODE_CONFIG, backup)
+    OPENCODE_CONFIG.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {"ok": True, "path": str(OPENCODE_CONFIG), "models": len(models), "context": int(ctx)}
