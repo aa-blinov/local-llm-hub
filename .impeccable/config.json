@@ -1,3 +1,18 @@
 {
-  "buildPath": "code"
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "src/llm_hub/static/index.html"
+        ],
+        "createdAt": "2026-11-23T15:26:15.272Z",
+        "reason": "Assistant decision, not user-confirmed: the only infinite animation is .ld-fill (ld-slide), the indeterminate loader that DESIGN.md specifies for unknown durations; no content scrolls, and reduced-motion disables it."
+      }
+    ]
+  }
 }
