@@ -10,6 +10,12 @@ from pydantic import BaseModel, Field
 from .components import Components, Jobs
 from .config import load, save_model_dirs
 from .downloads import DownloadManager
+
+
+def _home_short(p) -> str:
+    """Show paths under the home folder as ~/..., so the interface does not expose the user name."""
+    s, home = str(p), str(Path.home())
+    return "~" + s[len(home):] if s.startswith(home) else s
 from .opencode import sync_config, status_config
 from .preflight import estimate
 from .supervisor import Supervisor, history_tail
@@ -206,11 +212,11 @@ def create_app() -> FastAPI:
         from . import settings as st
         from .config import ROOT
         data = st.load()
-        plist = Path.home() / "Library" / "LaunchAgents" / "com.local.llm-hub.plist"
-        data["autostart"] = plist.exists()
+        agents = Path.home() / "Library" / "LaunchAgents"
+        data["autostart"] = any(agents.glob("*llm-hub*.plist"))  # label differs between installs
         data["hf_token"] = "••••" if data.get("hf_token") else ""  # never expose the token
-        data["hf_cache_root"] = str(st.hf_cache_root())
-        data["default_hf_cache"] = str(st.DEFAULT_HF_HUB)
+        data["hf_cache_root"] = _home_short(st.hf_cache_root())
+        data["default_hf_cache"] = _home_short(st.DEFAULT_HF_HUB)
         return data
 
     @app.post("/api/settings")

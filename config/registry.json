@@ -41,43 +41,33 @@
   },
   "models": {
     "ornith-4bit": {
-      "label": "Ornith 1.5 35B-A3B, 4-bit MLX",
+      "label": "Ornith 1.5 35B-A3B, 4-bit (MLX)",
       "engine": "mlx",
-      "path": "~/.cache/huggingface/hub/models--ornith-ai--Ornith-1.5-35B-A3B-MLX-4bit/snapshots/19504d912fa8fc7622bf6b1de3db5d5d890b1f02",
-      "notes": "18 GB of weights, 128k context, about 55–65 tok/s, for coding in opencode",
-      "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-4bit"
+      "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-4bit",
+      "notes": "18 GiB of weights, 128k context. Measured about 55–65 tokens/s on this Mac. Default for coding."
     },
-    "ornith-6bit": {
-      "label": "Ornith 1.5 35B-A3B, 6-bit MLX",
+    "qwen36-27b-4bit": {
+      "label": "Qwen 3.6 27B, 4-bit (MLX)",
       "engine": "mlx",
-      "path": "~/.cache/huggingface/hub/models--ornith-ai--Ornith-1.5-35B-A3B-MLX-6bit/snapshots/585b7867b0517980293ece857b26d64e84491352",
-      "notes": "26 GB of weights, higher quality, about 57–66 tok/s",
-      "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-6bit"
+      "repo": "mlx-community/Qwen3.6-27B-4bit",
+      "notes": "15 GiB. Dense model, often rated the strongest for code. Slower per token than Ornith."
     },
-    "inkling-4-8bit": {
-      "label": "Inkling 2 Mini, 4-8bit MLX (netprojects)",
+    "qwen36-35b-a3b-4bit": {
+      "label": "Qwen 3.6 35B-A3B, 4-bit (MLX)",
       "engine": "mlx",
-      "path": "~/.cache/huggingface/hub/models--netprojects--Inkling-2-Mini-MLX-4-8bit/snapshots/0b437271c7982a8b7acdca011170dcc86b671b20",
-      "notes": "20 GB of weights, about 27 tok/s on long answers",
-      "repo": "netprojects/Inkling-2-Mini-MLX-4-8bit"
+      "repo": "mlx-community/Qwen3.6-35B-A3B-4bit",
+      "notes": "19 GiB. Mixture of experts: faster per token, good for chat."
     },
-    "inkling-gguf-q4km": {
-      "label": "Inkling 2 Mini, Q4_K_M GGUF (+ vision)",
-      "engine": "llamacpp",
-      "path": "~/.lmstudio/models/lmstudio-community/Inkling-2-Mini-GGUF/Inkling-2-Mini-Q4_K_M.gguf",
-      "mmproj": "~/.lmstudio/models/lmstudio-community/Inkling-2-Mini-GGUF/mmproj-Inkling-2-Mini-BF16.gguf",
-      "notes": "17 GB, needs a llama.cpp build with inkling2_loop (upstream, not Homebrew)"
-    },
-    "smoke-qwen-0.5b": {
-      "label": "Test: Qwen2.5 0.5B, 4-bit MLX (290 MB, for checks)",
+    "ornith-9b-4bit": {
+      "label": "Ornith 1.5 9B, 4-bit (MLX)",
       "engine": "mlx",
-      "repo": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
-      "notes": "A small model for checking downloads and startup"
+      "repo": "ornith-ai/Ornith-1.5-9B-MLX-4bit",
+      "notes": "4.7 GiB. Small and fast, for quick checks and simple questions."
     }
   },
   "presets": {
     "coding": {
-      "label": "Coding: 128k, prefix cache",
+      "label": "Coding: 128k context, prefix cache",
       "model": "ornith-4bit",
       "ctx": 131072,
       "prefill": 512,
@@ -85,7 +75,7 @@
       "apc_mem_gb": 6
     },
     "chat": {
-      "label": "Chat: 32k, no cache, fast start",
+      "label": "Chat: 32k context, no cache, quick start",
       "model": "ornith-4bit",
       "ctx": 32768,
       "prefill": 1024,

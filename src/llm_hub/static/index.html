@@ -8,6 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d3557'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f6f4ef'/%3E%3C/svg%3E">
+  <script>
+    // Apply the saved theme and section before the first paint, so nothing flashes.
+    try {
+      var savedTheme = localStorage.getItem("theme");
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+      var wanted = location.hash.replace("#", "") || localStorage.getItem("start_view") || "simple";
+      document.documentElement.dataset.view = (wanted === "panel" || wanted === "components") ? wanted : "simple";
+    } catch (e) {}
+  </script>
   <style>
     /* Tokens: warm neutral background, one dark accent, hairlines instead of shadows. */
     :root {
@@ -38,6 +47,10 @@
     * { box-sizing: border-box; }
     .lbl-short { display: none; }
     [hidden] { display: none !important; }
+    html[data-view="panel"] #view-simple, html[data-view="panel"] #view-components,
+    html[data-view="components"] #view-simple, html[data-view="components"] #view-panel { display: none !important; }
+    html[data-view="panel"] #view-panel { display: grid !important; }
+    html[data-view="components"] #view-components { display: flex !important; }
     html { scrollbar-gutter: stable; }
     html, body { height: 100%; margin: 0; background: var(--ground); color: var(--ink);
       font: 400 16px/1.5 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -59,7 +72,7 @@
     .panel { background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: var(--s-4) var(--s-6); min-height: 0; overflow: auto; }
     .panel h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 var(--s-4); }
     .panel h2.sub { margin-top: var(--s-6); font-size: 18px; }
-    main { height: calc(100vh - var(--nav)); padding: var(--s-4); }
+    main { height: calc(100vh - var(--nav)); padding: var(--s-4); overflow: auto; }
 
     /* Simple view: four steps in one column */
     #view-simple { height: 100%; overflow: auto; }
@@ -83,7 +96,8 @@
     .good { color: var(--ok); } .warn { color: var(--wait); } .bad { color: var(--off); }
 
     /* Advanced view */
-    #view-panel { height: 100%; display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: minmax(0, 1fr) minmax(180px, 32%); }
+    #view-panel { display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: 460px 300px auto; }
+    #settings-panel { grid-column: 1 / -1; }
     #view-panel > * { min-width: 0; }
     .logpanel { grid-column: 1 / 3; display: flex; flex-direction: column; }
     .logpanel pre { flex: 1; min-height: 0; }
@@ -104,6 +118,7 @@
     select, input[type=number], textarea { width: 100%; min-height: 44px; background: var(--ground); color: var(--ink);
       border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-2) var(--s-4); font-family: inherit; font-size: 16px; line-height: 1.4; }
     textarea { min-height: 96px; resize: vertical; }
+    ::placeholder { color: var(--muted); opacity: 1; }  /* 4.5:1 or better in both themes */
     select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
     input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--action); vertical-align: -4px; margin-right: var(--s-2); }
     .check { display: flex; align-items: center; font-size: 16px; color: var(--ink); margin: var(--s-3) 0 0; }
@@ -155,14 +170,13 @@
       #view-panel { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
       .logpanel, .histpanel { grid-column: auto; }
       .step { grid-template-columns: 1fr; }
-      .num { display: none; }
       .comp { grid-template-columns: 1fr; }
       .comp .btns { justify-content: flex-start; }
     }
     @media (max-width: 640px) {
       .topbar { padding: 0 var(--s-3); gap: var(--s-2); overflow-x: auto; }
       .brand { white-space: nowrap; font-size: 14px; }
-      .topbar .tab { padding: 6px 4px; font-size: 13px; }
+      .topbar .tab { padding: 10px 6px; min-height: 44px; font-size: 14px; display: inline-flex; align-items: center; }
       #theme { min-height: 44px; padding: 0 var(--s-2); font-size: 13px; }
       .tabs { margin-left: 0; gap: 0; }
       .tab { white-space: nowrap; }
@@ -319,8 +333,8 @@
       <label for="prompt">Prompt</label>
       <textarea id="prompt">Explain in two sentences why the sky is blue.</textarea>
       <label for="maxtok">Maximum tokens in the answer</label>
-      <input id="maxtok" type="number" value="300" min="1" max="2048">
-      <div class="actions"><button id="send" class="primary">Send</button></div>
+      <input id="maxtok" type="number" value="600" min="1" max="2048">
+      <div class="actions"><button id="send">Send</button></div>
       <p class="hint" id="chatstat"></p>
       <div class="answer" id="answer"></div>
     </section>
@@ -334,16 +348,7 @@
       <h2>History</h2>
       <div id="history"></div>
     </section>
-  </div>
 
-  <!-- ===== Components ===== -->
-  <section id="view-components" hidden>
-    <div class="panel">
-      <h2>Programs for models</h2>
-      <div id="comp-engines"></div>
-      <h2 class="sub">Models</h2>
-      <div id="comp-models"></div>
-    </div>
     <section class="panel" id="settings-panel">
       <h2>General settings</h2>
       <label class="check"><input type="checkbox" id="st-autostart">Start the panel at login</label>
@@ -361,16 +366,26 @@
       <input id="st-token" type="password" placeholder="Leave empty if you do not need it" autocomplete="off" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
       <label for="st-swap">Warn when swap usage exceeds, GB</label>
       <input id="st-swap" type="number" min="1" max="64" step="1" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
-      <div class="row-actions"><button id="st-save" class="primary small">Save settings</button></div>
+      <div class="row-actions"><button id="st-save" class="small">Save settings</button></div>
       <p class="hint" id="st-msg"></p>
     </section>
+  </div>
+
+  <!-- ===== Components ===== -->
+  <section id="view-components" hidden>
+    <div class="panel">
+      <h2>Programs for models</h2>
+      <div id="comp-engines"></div>
+      <h2 class="sub">Models</h2>
+      <div id="comp-models"></div>
+    </div>
 
     <section class="panel" id="folders-panel">
       <h2>Model folders</h2>
       <p class="hint">If models are already on your disk (an external drive, LM Studio, another folder), add that folder. The app finds them and does not download them again.</p>
       <div class="row-actions" style="margin-top:var(--s-3)">
         <input id="folder-path" type="text" placeholder="For example: /Volumes/Models or ~/.lmstudio/models" style="flex:1;min-width:0;min-height:40px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
-        <button id="folder-add" class="primary small">Add folder</button>
+        <button id="folder-add" class="small">Add folder</button>
       </div>
       <p class="hint" id="folder-msg" style="min-height:2.6em"></p>
       <div id="folder-list" style="margin-top:var(--s-3)"></div>

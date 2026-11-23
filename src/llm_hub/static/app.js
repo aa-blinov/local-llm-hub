@@ -36,17 +36,19 @@ const fmt = (v, u = "") => (v == null ? "—" : v + u);
 let catalog = null;
 let status = null;
 let comps = [];
+let simpleRisk = false, settingsRisk = false;  // last memory verdict is "risk": Start asks first
 let preflightTimer = null;
 let dlTimer = null;
 let jobWatch = null;
 
 // Labels for the simple view. Keys come from config/registry.json.
+// Only these models appear in the Simple view. Names come from config/registry.json,
+// so each model has one name in every section.
 const SIMPLE_MODELS = {
-  "ornith-4bit": { name: "Smart (recommended)", size: "≈18 GB", about: "Answers questions and helps with code. Suits most tasks." },
-  "ornith-6bit": { name: "Smart and more precise (uses more space)", size: "≈26 GB", about: "Slightly more precise than the previous one, but takes more space and runs slower." },
-  "inkling-4-8bit": { name: "Alternative", size: "≈19 GB", about: "An alternative model for questions and conversation." },
-  "inkling-gguf-q4km": { name: "Alternative, for advanced users", size: "≈17 GB", about: "Requires the llama.cpp program. For experienced users." },
-  "smoke-qwen-0.5b": { name: "Test, small", size: "≈0.3 GB", about: "Small and fast, only to check that everything works. Not needed for everyday use." },
+  "ornith-4bit": { size: "≈18 GiB", about: "Recommended. Answers questions and helps with code." },
+  "qwen36-27b-4bit": { size: "≈15 GiB", about: "Strong for code, but slower per answer." },
+  "qwen36-35b-a3b-4bit": { size: "≈19 GiB", about: "Faster per answer. Good for everyday chat." },
+  "ornith-9b-4bit": { size: "≈5 GiB", about: "Small and quick. For simple questions and checks." },
 };
 const SIMPLE_PRESETS = {
   chat: "Chat — for conversations and questions (quick start)",
@@ -141,7 +143,7 @@ function rebuildSimpleModels(selected) {
   sm.innerHTML = "";
   for (const [k, info] of Object.entries(catalog.models)) {
     if (!(k in SIMPLE_MODELS) && !info.exists) continue;
-    sm.add(new Option((SIMPLE_MODELS[k] || {}).name || info.label, k));
+    sm.add(new Option(info.label, k));
   }
   sm.value = [...sm.options].some((o) => o.value === keep) ? keep : (sm.options[0] ? sm.options[0].value : "");
 }
@@ -208,6 +210,7 @@ function refreshPreflight() {
       const el = $("verdict");
       el.className = "verdict " + ({ ok: "good", tight: "warn", risk: "bad" }[v.verdict] || "");
       el.textContent = v.verdict === "unknown" ? (v.message || "Memory check is not available") : v.message;
+      settingsRisk = v.verdict === "risk";
     }
     const sm = $("s-model").value;
     const sp = $("s-preset").value;
@@ -221,6 +224,7 @@ function refreshPreflight() {
       }[v.verdict] || ["", "Memory check is not available."];
       $("s-memory").className = "verdict " + text[0];
       $("s-memory").textContent = text[1];
+      simpleRisk = v.verdict === "risk";
     }
   }, 200);
 }
@@ -232,7 +236,7 @@ function runningLabel(s) {
   const names = { chat: "Chat", coding: "Coding", long: "Long context" };
   const hit = Object.entries(catalog.presets).find(([, p]) => p.model === s.model && s.opts && p.ctx === s.opts.ctx);
   const mode = hit ? (names[hit[0]] || hit[1].label) : "Custom settings";
-  return `${mode}, ${(SIMPLE_MODELS[s.model] || {}).name || s.model_label || s.model}`;
+  return `${mode}, ${s.model_label || s.model}`;
 }
 
 let lastSyncedRun = null;
@@ -251,7 +255,7 @@ function render(s) {
     ["Program", s.running ? catalog.engines[s.engine].label : "—"],
     ["Model", s.model_label || "—"],
     ["Process ID", fmt(s.pid)],
-    ["Used by the program", fmt(s.rss_gib, " GB")],
+    ["Used by the program", fmt(s.rss_gib, " GiB")],
     ["Conversation length", s.opts ? Number(s.opts.ctx).toLocaleString("en-US") : "—"],
     ["Automatic restarts (10 min)", fmt(s.restarts_recent)],
     ["Port", catalog.port],
@@ -265,7 +269,7 @@ function render(s) {
     ["Inactive (system cache)", gib(m.inactive_gib)],
     ["Wired (system)", gib(m.wired_gib)],
     ["Compressed", gib(m.compressor_gib)],
-    ["Swap (disk used as memory)", m.swap_used_gib == null ? "—" : `${m.swap_used_gib} of ${m.swap_total_gib} GB`],
+    ["Swap (disk used as memory)", m.swap_used_gib == null ? "—" : `${m.swap_used_gib} of ${m.swap_total_gib} GiB`],
   ].map(([a, b]) => `<div class="row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("");
   $("memwarn").textContent = m.swap_used_gib > ((appSettings && appSettings.swap_warn_gb) || 12)
     ? "The disk is being used as memory, so work will be slower. Close other programs." : "";
@@ -308,6 +312,7 @@ async function refreshHistory() {
 
 // ---- actions: advanced view ----
 async function startAdvanced() {
+  if (settingsRisk && !confirm("This model may not fit in memory. Starting it can slow the Mac down a lot or fail. Start anyway?")) return;
   $("actmsg").textContent = "Starting…";
   const body = { model: $("model").value, ctx: +$("ctx").value };
   if ($("engine").value === "mlx") {
@@ -391,6 +396,7 @@ function say(text, ms = 8000) { transient = { text, until: Date.now() + ms }; }
 async function startSimple() {
   const model = $("s-model").value;
   const preset = $("s-preset").value;
+  if (simpleRisk && !confirm("This model may not fit in memory. Starting it can slow the Mac down a lot or fail. Start anyway?")) return;
   say("Starting…");
   const r = await api("/api/start", { model, preset });
   say(r.ok ? "The assistant is starting. This takes about a minute." : friendly(r.error), 10000);
@@ -525,7 +531,6 @@ async function sendChat(prompt, maxTokens, answerEl, statEl) {
     answerEl.innerHTML = renderAnswer(r.answer);
     statEl.textContent = `Answered in ${r.seconds} s.`;
     if (copyRow) $("s-copy").disabled = false;
-    if (answerEl.id === "s-answer") $("s-prompt").value = "";
   } else {
     statEl.textContent = friendly(r.error);
   }
@@ -609,6 +614,7 @@ function watchJob(jobId, label) {
 let appSettings = null;
 async function loadSettings() {
   appSettings = await api("/api/settings");
+  try { localStorage.setItem("start_view", appSettings.start_view); } catch (e) {}  // read by index.html before paint
   $("st-autostart").checked = !!appSettings.autostart;
   $("st-view").value = appSettings.start_view;
   $("st-dir").value = appSettings.download_dir || "";
@@ -668,6 +674,7 @@ $("folder-add").onclick = async () => {
 function route() {
   const h = location.hash || ("#" + ((appSettings && appSettings.start_view) || "simple"));
   const view = { "#panel": "panel", "#components": "components" }[h] || "simple";
+  document.documentElement.dataset.view = view;  // keeps the pre-paint rule in index.html in sync
   $("view-simple").hidden = view !== "simple";
   $("view-panel").hidden = view !== "panel";
   $("view-components").hidden = view !== "components";
