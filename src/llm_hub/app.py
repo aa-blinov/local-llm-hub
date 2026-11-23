@@ -8,7 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .components import Components, Jobs
-from .config import load, save_model_dirs
+from .config import load, load_user_models, save_model_dirs
+from .usermodels import ModelAddError, add_user_model, remove_user_model
 from .downloads import DownloadManager
 
 
@@ -48,6 +49,14 @@ class ComponentBody(BaseModel):
 
 class FolderBody(BaseModel):
     path: str
+
+
+class RepoBody(BaseModel):
+    repo: str
+
+
+class KeyBody(BaseModel):
+    key: str
 
 
 class SettingsBody(BaseModel):
@@ -202,6 +211,24 @@ def create_app() -> FastAPI:
         reg.model_dirs = dirs
         n = reg.refresh_discovered()
         return {"ok": True, "found": n}
+
+    @app.get("/api/models/user")
+    def user_models_list():
+        return {"models": load_user_models()}
+
+    @app.post("/api/models/add")
+    def user_models_add(body: RepoBody):
+        try:
+            return add_user_model(reg, body.repo)
+        except ModelAddError as e:
+            return {"ok": False, "error": str(e)}
+
+    @app.post("/api/models/remove")
+    def user_models_remove(body: KeyBody):
+        try:
+            return remove_user_model(reg, body.key)
+        except ModelAddError as e:
+            return {"ok": False, "error": str(e)}
 
     @app.post("/api/model-dirs/rescan")
     def model_dirs_rescan():

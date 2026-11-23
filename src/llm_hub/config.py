@@ -14,6 +14,7 @@ CACHE_DIR = ROOT / "cache"
 APC_DIR = CACHE_DIR / "apc"
 HISTORY_PATH = LOG_DIR / "history.jsonl"
 OPENCODE_CONFIG = Path.home() / ".config" / "opencode" / "opencode.jsonc"
+USER_MODELS_PATH = ROOT / "config" / "user_models.json"  # models added from Hugging Face (not in git)
 
 
 def _expand(p: str | None) -> Path | None:
@@ -113,7 +114,24 @@ class Registry:
         return len(found)
 
 
-def load(path: Path = REGISTRY_PATH) -> Registry:
+def load_user_models(path: Path = USER_MODELS_PATH) -> list[dict]:
+    """Models the user added by repository name. A missing or broken file means an empty list."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def save_user_models(items: list[dict], path: Path = USER_MODELS_PATH) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def load(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> Registry:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     engines = {
         k: Engine(k, v["label"], _expand(v["binary"]), v.get("ctx_choices", []), v.get("prefill_choices", []))
@@ -126,6 +144,10 @@ def load(path: Path = REGISTRY_PATH) -> Registry:
         base[k] = Model(k, v["label"], v["engine"], v.get("repo"), _expand(v.get("path")),
                         _expand(v.get("mmproj")), v.get("notes", ""),
                         simple=v.get("simple"))
+    for item in load_user_models(user_path):
+        if item.get("engine") in engines and item.get("key") and item.get("repo"):
+            base[item["key"]] = Model(item["key"], item.get("label", item["key"]), item["engine"],
+                                      item["repo"], None, None, item.get("notes", ""))
     reg = Registry(
         port=int(data.get("port", 8000)),
         ui_port=int(data.get("ui_port", 8765)),

@@ -673,7 +673,7 @@ function route() {
   $("tab-simple").classList.toggle("on", view === "simple");
   $("tab-panel").classList.toggle("on", view === "panel");
   $("tab-components").classList.toggle("on", view === "components");
-  if (view === "components") loadComponents();
+  if (view === "components") { loadComponents(); loadUserModels(); }
 }
 window.addEventListener("hashchange", route);
 
@@ -687,6 +687,54 @@ $("theme").onclick = () => {
   applyTheme(cur === "" ? "dark" : cur === "dark" ? "light" : "");
 };
 try { applyTheme(localStorage.getItem("theme") || ""); } catch (e) {}
+
+// ---- models added from Hugging Face ----
+async function loadUserModels() {
+  const { models } = await api("/api/models/user");
+  const box = $("user-models");
+  box.innerHTML = "";
+  if (!models.length) {
+    const none = document.createElement("p");
+    none.className = "hint";
+    none.textContent = "No models added yet.";
+    box.append(none);
+    return;
+  }
+  for (const m of models) {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:var(--s-4);padding:var(--s-2) 0;border-bottom:1px solid var(--hair)";
+    const text = document.createElement("div");
+    const name = document.createElement("div");
+    name.textContent = m.label;
+    const repo = document.createElement("div");
+    repo.className = "hint";
+    repo.textContent = `${m.repo} · ${m.engine}`;
+    text.append(name, repo);
+    const btn = document.createElement("button");
+    btn.className = "small";
+    btn.textContent = "Remove from list";
+    btn.onclick = async () => {
+      const r = await api("/api/models/remove", { key: m.key });
+      if (!r.ok) { $("hf-msg").textContent = r.error; return; }
+      catalog = await api("/api/catalog");
+      loadComponents(); loadUserModels();
+    };
+    row.append(text, btn);
+    box.append(row);
+  }
+}
+
+$("hf-add").onclick = async () => {
+  const repo = $("hf-repo").value.trim();
+  if (!repo) return;
+  $("hf-msg").textContent = "Checking the repository on Hugging Face…";
+  const r = await api("/api/models/add", { repo });
+  if (!r.ok) { $("hf-msg").textContent = r.error; return; }
+  $("hf-msg").textContent = `Added ${r.label} (${r.engine}, about ${r.size_gib} GiB). Press Install in the list above to download it.`;
+  $("hf-repo").value = "";
+  catalog = await api("/api/catalog");
+  loadComponents(); loadUserModels();
+};
 
 // ---- start ----
 loadSettings().then(() => route());

@@ -378,6 +378,14 @@
       <div id="comp-engines"></div>
       <h2 class="sub">Models</h2>
       <div id="comp-models"></div>
+      <h2 class="sub">Add a model from Hugging Face</h2>
+      <p class="hint">Paste a repository name, for example mlx-community/Qwen3.6-27B-4bit. The app checks it first. Nothing is downloaded until you press Install.</p>
+      <div class="row-actions" style="margin-top:var(--s-3)">
+        <input id="hf-repo" type="text" placeholder="owner/model-name" style="flex:1;min-width:0;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+        <button id="hf-add" class="small">Add</button>
+      </div>
+      <p class="hint" id="hf-msg" style="min-height:2.6em"></p>
+      <div id="user-models"></div>
     </div>
 
     <section class="panel" id="folders-panel">
