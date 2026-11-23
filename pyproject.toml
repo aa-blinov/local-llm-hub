@@ -1,11 +1,12 @@
 [project]
 name = "local-llm-hub"
 version = "0.1.0"
-description = "Веб-панель для запуска локальных LLM на Apple Silicon: выбор движка (MLX / llama.cpp), модели и параметров."
+description = "Web panel to run local LLMs on Apple Silicon: choose an engine (MLX or llama.cpp), a model and its parameters."
 requires-python = ">=3.10"
 dependencies = [
   "fastapi>=0.115",
   "uvicorn>=0.30",
+  "huggingface_hub>=0.25",
 ]
 
 [project.optional-dependencies]

@@ -1,7 +1,7 @@
-"""Компоненты: движки (MLX, llama.cpp) и модели. Установка и удаление из интерфейса.
+"""Components: engines (MLX, llama.cpp) and models. Install and remove from the interface.
 
-Установка и удаление выполняются фоновыми задачами, каждая пишет лог в logs/jobs/<id>.log.
-Удаление модели — только кэш Hugging Face для её репозитория; файлы, положенные вручную, не трогаем.
+Install and remove run as background jobs; each writes a log to logs/jobs/<id>.log.
+Removing a model only deletes its Hugging Face cache entry; files placed by hand are never touched.
 """
 import json
 import shutil
@@ -37,7 +37,7 @@ class Jobs:
         with self._lock:
             cur = self.latest(comp_id)
             if cur and cur["state"] == "running":
-                return {"ok": False, "error": "уже выполняется другая операция с этим компонентом"}
+                return {"ok": False, "error": "another operation on this component is already running"}
             job_id = uuid.uuid4().hex[:10]
             log_path = JOBS_DIR / f"{job_id}.log"
             job = {"id": job_id, "comp": comp_id, "action": action, "state": "running",
@@ -55,11 +55,11 @@ class Jobs:
             try:
                 fn(log)
                 job["state"] = "done"
-                log("== готово")
+                log("== done")
             except Exception as e:
                 job["state"] = "error"
                 job["error"] = str(e)[:300]
-                log(f"== ошибка: {e}")
+                log(f"== error: {e}")
 
     def latest(self, comp_id: str) -> dict | None:
         jobs = [j for j in self._jobs.values() if j["comp"] == comp_id]
@@ -83,7 +83,7 @@ def _run(cmd: list[str], log, cwd: Path | None = None):
         log(line)
     code = proc.wait()
     if code != 0:
-        raise RuntimeError(f"команда завершилась с кодом {code}: {cmd[0]}")
+        raise RuntimeError(f"command exited with code {code}: {cmd[0]}")
 
 
 class Components:
@@ -93,7 +93,7 @@ class Components:
         self.dl = dl
         self.jobs = Jobs()
 
-    # ---- состояние ----
+    # ---- state ----
     def _mlx_installed(self) -> bool:
         return self.reg.engines["mlx"].binary.exists()
 
@@ -111,8 +111,8 @@ class Components:
                 "installed": installed, "size_gib": size,
                 "can_install": not installed, "can_uninstall": installed,
                 "job": self._job_view(job),
-                "note": ("MLX: пакеты mlx-vlm, torch, torchvision в .venv" if key == "mlx"
-                         else "Сборка llama-server (Metal) в engines/llama.cpp/bin"),
+                "note": ("MLX: mlx-vlm, torch and torchvision packages in .venv" if key == "mlx"
+                         else "llama-server build (Metal) in engines/llama.cpp/bin"),
             })
         for key, m in self.reg.models.items():
             installed = m.exists
@@ -132,11 +132,11 @@ class Components:
 
     def _model_note(self, m) -> str:
         if m.origin == "folder":
-            return f"найдена в папке: {m.notes.replace('Найдено в папке ', '')}"
+            return f"found in folder: {m.notes.replace('Found in folder ', '')}"
         if m.repo:
-            loc = "в папке моделей" if not m.in_hf_cache and m.exists else "репозиторий " + m.repo
+            loc = "in a model folder" if not m.in_hf_cache and m.exists else "repository " + m.repo
             return f"{m.engine} · {loc}"
-        return f"{m.engine} · файлы положены вручную"
+        return f"{m.engine} · files placed by hand"
 
     def _job_view(self, job):
         if not job:
@@ -151,7 +151,7 @@ class Components:
             total = 0
             for root in all_hf_roots():
                 if not root.exists():
-                    continue  # пустую или ещё не созданную папку не сканируем
+                    continue  # do not scan empty or not yet created folders
                 for r in scan_cache_dir(str(root)).repos:
                     if r.repo_id == repo:
                         total += r.size_on_disk
@@ -164,7 +164,7 @@ class Components:
         st = self.sup.status()
         return bool(st["running"] and st["model"] == key)
 
-    # ---- установка ----
+    # ---- install ----
     def install(self, comp_id: str) -> dict:
         kind, key = comp_id.split(":", 1)
         if kind == "engine" and key == "mlx":
@@ -174,14 +174,14 @@ class Components:
         if kind == "model":
             m = self.reg.models.get(key)
             if not m or not m.repo:
-                return {"ok": False, "error": "у модели нет репозитория для загрузки"}
+                return {"ok": False, "error": "the model has no repository to download from"}
             return self.dl.start(m)
-        return {"ok": False, "error": "неизвестный компонент"}
+        return {"ok": False, "error": "unknown component"}
 
     def _install_mlx(self, log):
         _run(["uv", "pip", "install", "--python", str(VENV_PY), MLX_SPEC, "torch", "torchvision"], log, cwd=ROOT)
         if not self._mlx_installed():
-            raise RuntimeError("mlx_vlm.server не появился после установки")
+            raise RuntimeError("mlx_vlm.server did not appear after installation")
 
     def _install_llama(self, log):
         LLAMA_SRC.parent.mkdir(parents=True, exist_ok=True)
@@ -201,14 +201,14 @@ class Components:
                 shutil.copytree(item, dst, dirs_exist_ok=True)
             else:
                 shutil.copy2(item, dst)
-        log(f"скопировано в {LLAMA_BIN_DIR}")
+        log(f"copied to {LLAMA_BIN_DIR}")
 
-    # ---- удаление ----
+    # ---- remove ----
     def uninstall(self, comp_id: str) -> dict:
         kind, key = comp_id.split(":", 1)
         if kind == "engine":
             if self.sup.status()["running"] and self.sup.status()["engine"] == key:
-                return {"ok": False, "error": "движок запущен: сначала остановите его"}
+                return {"ok": False, "error": "the engine is running: stop it first"}
             if key == "mlx":
                 return self.jobs.submit(comp_id, "uninstall", self._uninstall_mlx)
             if key == "llamacpp":
@@ -216,13 +216,13 @@ class Components:
         if kind == "model":
             m = self.reg.models.get(key)
             if not m:
-                return {"ok": False, "error": "такой модели нет"}
+                return {"ok": False, "error": "no such model"}
             if not m.in_hf_cache:
-                return {"ok": False, "error": "модель лежит в вашей папке. Удалите её в Finder или уберите папку из списка"}
+                return {"ok": False, "error": "the model is in your own folder. Delete it in Finder or remove the folder from the list"}
             if self._model_running(key):
-                return {"ok": False, "error": "модель запущена: сначала остановите движок"}
+                return {"ok": False, "error": "the model is running: stop the engine first"}
             return self.jobs.submit(comp_id, "uninstall", lambda log: self._delete_model(m.repo, log))
-        return {"ok": False, "error": "неизвестный компонент"}
+        return {"ok": False, "error": "unknown component"}
 
     def _uninstall_mlx(self, log):
         _run(["uv", "pip", "uninstall", "--python", str(VENV_PY), "mlx-vlm", "torch", "torchvision"], log, cwd=ROOT)
@@ -230,7 +230,7 @@ class Components:
     def _uninstall_llama(self, log):
         if LLAMA_BIN_DIR.exists():
             shutil.rmtree(LLAMA_BIN_DIR)
-            log(f"удалено: {LLAMA_BIN_DIR}")
+            log(f"removed: {LLAMA_BIN_DIR}")
 
     def _delete_model(self, repo: str, log):
         from huggingface_hub import scan_cache_dir
@@ -245,10 +245,10 @@ class Components:
                     revs = [rev.commit_hash for rev in r.revisions]
                     if revs:
                         strategy = info.delete_revisions(*revs)
-                        log(f"освобождается {strategy.expected_freed_size_str} в {root}")
+                        log(f"freeing {strategy.expected_freed_size_str} in {root}")
                         strategy.execute()
                         revs_all += revs
         if not revs_all:
-            log("в кэше нет этой модели")
+            log("this model is not in the cache")
             return
-        log(f"удалено ревизий: {len(revs_all)}")
+        log(f"removed revisions: {len(revs_all)}")

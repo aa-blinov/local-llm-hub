@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-radius="soft">
+<html lang="en" data-radius="soft">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d3557'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f6f4ef'/%3E%3C/svg%3E">
   <style>
-    /* Токены: тёплый нейтральный фон, один тёмный акцент, hairline вместо теней. */
+    /* Tokens: warm neutral background, one dark accent, hairlines instead of shadows. */
     :root {
       --ground: #f6f4ef; --panel: #fbfaf7; --ink: #1c1a17; --muted: #5f5b54;
       --hair: rgba(28, 26, 23, .14); --action: #1d3557; --on-action: #ffffff;
@@ -43,7 +43,7 @@
       font: 400 16px/1.5 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif; }
     body { overflow: hidden; }
 
-    /* Верхняя полоса */
+    /* Top bar */
     .topbar { height: var(--nav); background: var(--ground); border-bottom: 1px solid var(--hair);
       display: flex; align-items: center; gap: var(--s-4); padding: 0 var(--s-6); }
     .brand { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
@@ -61,7 +61,7 @@
     .panel h2.sub { margin-top: var(--s-6); font-size: 18px; }
     main { height: calc(100vh - var(--nav)); padding: var(--s-4); }
 
-    /* Простой режим: четыре шага в один столбец */
+    /* Simple view: four steps in one column */
     #view-simple { height: 100%; overflow: auto; }
     .steps { max-width: 800px; margin: 0 auto; display: grid; gap: var(--s-6); padding: var(--s-2) 0 var(--s-12); }
     .intro { color: var(--muted); margin: 0; font-size: 16px; max-width: 60ch; }
@@ -82,7 +82,7 @@
     .muted { color: var(--muted); font-size: 14px; }
     .good { color: var(--ok); } .warn { color: var(--wait); } .bad { color: var(--off); }
 
-    /* Подробный режим */
+    /* Advanced view */
     #view-panel { height: 100%; display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: minmax(0, 1fr) minmax(180px, 32%); }
     #view-panel > * { min-width: 0; }
     .logpanel { grid-column: 1 / 3; display: flex; flex-direction: column; }
@@ -125,7 +125,7 @@
     button:disabled { opacity: .4; cursor: default; }
     button:not(:disabled):hover { filter: brightness(.97); }
 
-    /* Единый индикатор прогресса: установка, загрузка, запуск модели, ответ ассистента */
+    /* One progress indicator: install, download, model loading, answering */
     .loader { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-sm); }
     .loader { min-height: 60px; margin-bottom: var(--s-2); }
     .ld-top { display: flex; justify-content: space-between; gap: var(--s-4); font-size: 14px; color: var(--ink); margin-bottom: var(--s-2); }
@@ -137,7 +137,7 @@
     @keyframes ld-slide { 0% { transform: translateX(-100%) scaleX(.32); } 100% { transform: translateX(312%) scaleX(.32); } }
     @media (prefers-reduced-motion: reduce) { .loader.indet .ld-fill { animation: none; transform: scaleX(1); opacity: .35; } }
 
-    /* Компоненты */
+    /* Components */
     .comp { min-height: 64px; display: grid; grid-template-columns: minmax(0, 1fr) 110px 150px 200px; gap: var(--s-4); align-items: center; padding: var(--s-3) 0; border-bottom: 1px solid var(--hair); }
     .comp:last-child { border-bottom: 0; }
     .comp .name { font-weight: 500; }
@@ -178,18 +178,18 @@
 <body>
 <header class="topbar">
   <span class="brand">Local LLM Hub</span>
-  <nav class="tabs" aria-label="Разделы">
-    <a href="#simple" id="tab-simple" class="tab">Просто</a>
-    <a href="#panel" id="tab-panel" class="tab">Настройки</a>
-    <a href="#components" id="tab-components" class="tab"><span class="lbl-long">Программы и модели</span><span class="lbl-short">Модели</span></a>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#simple" id="tab-simple" class="tab">Simple</a>
+    <a href="#panel" id="tab-panel" class="tab">Settings</a>
+    <a href="#components" id="tab-components" class="tab"><span class="lbl-long">Programs and models</span><span class="lbl-short">Models</span></a>
   </nav>
   <span class="runinfo" id="runinfo" style="min-width:300px;text-align:center;flex:0 0 auto"></span>
-  <button id="theme" class="small" title="Светлая или тёмная тема">Тема</button>
+  <button id="theme" class="small" title="Light or dark theme">Theme</button>
   <span class="state"><span class="dot" id="dot"></span><span id="state">—</span></span>
 </header>
 
 <main>
-  <!-- ===== Простой режим: четыре шага ===== -->
+  <!-- ===== Simple view: four steps ===== -->
   <section id="view-simple">
     <div class="steps">
       <div>
@@ -197,17 +197,17 @@
         <div class="ld-top"><span class="ld-label"></span><span class="ld-pct"></span></div>
         <div class="ld-track"><div class="ld-fill"></div></div>
       </div>
-      <p class="intro">Выполните шаги по порядку. Зелёная галочка означает, что шаг готов. Ничего настраивать не нужно.</p>
+      <p class="intro">Complete the steps in order. A green step is done. There is nothing to configure.</p>
       </div>
 
       <div class="step" id="st-engine">
         <div class="num">1</div>
         <div>
-          <h3>Установить программу для моделей</h3>
-          <p class="explain">Это программа-помощник, она запускает модель на вашем Mac. Ставится один раз: около 2 ГБ, 3–5 минут.</p>
+          <h3>Install the model program</h3>
+          <p class="explain">This is the program that runs models on your Mac. You install it once: about 2 GB, 3–5 minutes.</p>
           <div class="card">
-            <div id="s-engine-text">Проверяю…</div>
-            <div class="row-actions"><button id="s-engine-btn" class="primary">Установить</button></div>
+            <div id="s-engine-text">Checking…</div>
+            <div class="row-actions"><button id="s-engine-btn" class="primary">Install</button></div>
           </div>
         </div>
       </div>
@@ -215,13 +215,13 @@
       <div class="step" id="st-model">
         <div class="num">2</div>
         <div>
-          <h3>Выбрать и скачать модель</h3>
-          <p class="explain">Модель — это сам ассистент: все его знания хранятся в ней. Скачивается один раз, занимает много места на диске.</p>
+          <h3>Choose and download a model</h3>
+          <p class="explain">The model is the assistant itself: all its knowledge is stored in it. It downloads once and takes a lot of disk space.</p>
           <div class="card">
-            <label for="s-model" style="margin-top:0">Модель</label>
+            <label for="s-model" style="margin-top:0">Model</label>
             <select id="s-model"></select>
             <p class="muted" id="s-model-info" style="margin:var(--s-2) 0 0"></p>
-            <div class="row-actions"><button id="s-model-btn" class="primary">Скачать модель</button></div>
+            <div class="row-actions"><button id="s-model-btn" class="primary">Download model</button></div>
             <div id="s-model-text" class="msg"></div>
           </div>
         </div>
@@ -230,15 +230,15 @@
       <div class="step" id="st-run">
         <div class="num">3</div>
         <div>
-          <h3>Запустить ассистента</h3>
-          <p class="explain">«Чат» — для обычных вопросов, запускается быстрее. «Кодинг» — для работы с программами, помнит больше текста, но требует больше памяти.</p>
+          <h3>Start the assistant</h3>
+          <p class="explain">Chat is for everyday questions and starts faster. Coding is for working with programs, remembers more text and needs more memory.</p>
           <div class="card">
-            <label for="s-preset" style="margin-top:0">Режим</label>
+            <label for="s-preset" style="margin-top:0">Mode</label>
             <select id="s-preset"></select>
-            <div id="s-memory" class="verdict">Проверяю, хватит ли памяти…</div>
+            <div id="s-memory" class="verdict">Checking whether there is enough memory…</div>
             <div class="row-actions" style="margin-top:var(--s-4)">
-              <button id="s-start" class="primary big">Запустить</button>
-              <button id="s-stop" class="big">Остановить</button>
+              <button id="s-start" class="primary big">Start</button>
+              <button id="s-stop" class="big">Stop</button>
             </div>
             <div id="s-run-text" class="msg"></div>
           </div>
@@ -248,136 +248,136 @@
       <div class="step" id="st-chat">
         <div class="num">4</div>
         <div>
-          <h3>Спросить ассистента</h3>
-          <p class="explain">Напишите вопрос и нажмите «Отправить». Ответ обычно приходит за 2–30 секунд.</p>
+          <h3>Ask the assistant</h3>
+          <p class="explain">Type a question and press Send. An answer usually takes 2–30 seconds.</p>
           <div class="card">
-            <textarea id="s-prompt" placeholder="Например: объясни простыми словами, что такое модель"></textarea>
+            <textarea id="s-prompt" placeholder="For example: explain in simple words what a model is"></textarea>
             <div class="row-actions" style="margin-top:var(--s-3)">
-              <button id="s-send" class="primary">Отправить</button>
+              <button id="s-send" class="primary">Send</button>
             </div>
             <div class="answer" id="s-answer"></div>
-            <div class="row-actions" id="s-copy-row"><button id="s-copy" class="small" disabled>Скопировать ответ</button></div>
+            <div class="row-actions" id="s-copy-row"><button id="s-copy" class="small" disabled>Copy answer</button></div>
             <p class="muted" id="s-chatstat"></p>
-            <p class="muted" style="margin-top:var(--s-3)">Ассистент может ошибаться. Важные факты проверяйте в надёжных источниках.</p>
+            <p class="muted" style="margin-top:var(--s-3)">The assistant can make mistakes. Check important facts in reliable sources.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ===== Подробный режим ===== -->
+  <!-- ===== Settings view ===== -->
   <div id="view-panel" hidden>
     <section class="panel" id="launch">
-      <h2>Запуск</h2>
-      <label for="preset">Режим</label><p class="hint">Готовый набор: «Чат» для вопросов, «Кодинг» для программ.</p>
+      <h2>Launch</h2>
+      <label for="preset">Mode</label><p class="hint">A ready-made set: Chat for questions, Coding for programs.</p>
       <select id="preset"></select>
-      <div class="verdict" id="verdict">Проверка памяти…</div>
+      <div class="verdict" id="verdict">Checking memory…</div>
       <div class="actions">
-        <button id="start" class="primary">Запустить</button>
-        <button id="stop">Остановить</button>
+        <button id="start" class="primary">Start</button>
+        <button id="stop">Stop</button>
       </div>
       <p class="hint" id="actmsg" style="min-height:2.6em"></p>
-      <label for="engine">Программа для модели</label><p class="hint">Она запускает модель. MLX быстрее на Apple Silicon.</p>
+      <label for="engine">Program for the model</label><p class="hint">It runs the model. MLX is faster on Apple Silicon.</p>
       <select id="engine"></select>
-      <label for="model">Модель</label>
+      <label for="model">Model</label>
       <select id="model"></select>
       <div class="row-actions">
-        <button id="download" class="small">Скачать модель</button>
+        <button id="download" class="small">Download model</button>
         <span class="hint" id="dlstate"></span>
       </div>
-      <label for="ctx">Длина разговора, токенов</label><p class="hint">Сколько текста ассистент держит в голове. Больше — больше памяти.</p>
+      <label for="ctx">Conversation length, tokens</label><p class="hint">How much text the assistant keeps in mind. More means more memory.</p>
       <select id="ctx"></select>
       <div id="mlxopts">
-        <label for="prefill">Шаг чтения текста (prefill)</label><p class="hint">Сколько текста читается за раз. Меньше — экономнее по памяти, но медленнее.</p>
+        <label for="prefill">Reading step (prefill)</label><p class="hint">How much text is read at once. Smaller saves memory but is slower.</p>
         <select id="prefill"></select>
-        <label class="check"><input type="checkbox" id="apc">Кэш начала разговора (APC)</label><p class="hint">Сохраняет начало разговора на диск, чтобы не перечитывать его при каждом вопросе.</p>
-        <label for="apcmem">Лимит кэша, ГБ</label>
+        <label class="check"><input type="checkbox" id="apc">Cache the start of the conversation (APC)</label><p class="hint">Saves the start of the conversation to disk so it is not re-read for every question.</p>
+        <label for="apcmem">Cache limit, GB</label>
         <input id="apcmem" type="number" min="1" max="20" step="1">
       </div>
 
     </section>
 
     <section class="panel" id="state-panel">
-      <h2>Состояние</h2>
+      <h2>Status</h2>
       <div class="rows" id="status"></div>
       <p class="hint bad" id="loaderr" style="min-height:2.6em"></p>
-      <h2 class="sub">Память</h2>
+      <h2 class="sub">Memory</h2>
       <div class="rows" id="mem"></div>
       <p class="hint warn" id="memwarn"></p>
-      <h2 class="sub">Кэш и opencode</h2>
+      <h2 class="sub">Cache and opencode</h2>
       <div class="rows" id="cache"></div>
       <div class="row-actions">
-        <button id="cacheclear" class="small">Очистить кэш</button>
-        <button id="ocsync" class="small">Обновить конфиг opencode</button>
+        <button id="cacheclear" class="small">Clear cache</button>
+        <button id="ocsync" class="small">Update opencode config</button>
       </div>
       <p class="hint" id="ocmsg" style="min-height:2.6em"></p>
     </section>
 
     <section class="panel" id="chat">
-      <h2>Проверка ответа</h2>
-      <label for="prompt">Запрос</label>
-      <textarea id="prompt">Объясни в двух предложениях, почему небо голубое.</textarea>
-      <label for="maxtok">Максимум токенов в ответе</label>
+      <h2>Answer check</h2>
+      <label for="prompt">Prompt</label>
+      <textarea id="prompt">Explain in two sentences why the sky is blue.</textarea>
+      <label for="maxtok">Maximum tokens in the answer</label>
       <input id="maxtok" type="number" value="300" min="1" max="2048">
-      <div class="actions"><button id="send" class="primary">Отправить</button></div>
+      <div class="actions"><button id="send" class="primary">Send</button></div>
       <p class="hint" id="chatstat"></p>
       <div class="answer" id="answer"></div>
     </section>
 
     <section class="panel logpanel">
-      <h2>Журнал программы <button id="reflog" class="small" style="margin-left:var(--s-3)">Обновить</button></h2>
+      <h2>Program log <button id="reflog" class="small" style="margin-left:var(--s-3)">Refresh</button></h2>
       <pre id="log"></pre>
     </section>
 
     <section class="panel histpanel">
-      <h2>История</h2>
+      <h2>History</h2>
       <div id="history"></div>
     </section>
   </div>
 
-  <!-- ===== Компоненты ===== -->
+  <!-- ===== Components ===== -->
   <section id="view-components" hidden>
     <div class="panel">
-      <h2>Программы для моделей</h2>
+      <h2>Programs for models</h2>
       <div id="comp-engines"></div>
-      <h2 class="sub">Модели</h2>
+      <h2 class="sub">Models</h2>
       <div id="comp-models"></div>
     </div>
     <section class="panel" id="settings-panel">
-      <h2>Общие настройки</h2>
-      <label class="check"><input type="checkbox" id="st-autostart">Запускать панель при входе в систему</label>
-      <p class="hint">Ассистент поднимется сам после перезагрузки. Выключите, если не нужно.</p>
-      <label for="st-view">С какого раздела открывать панель</label>
+      <h2>General settings</h2>
+      <label class="check"><input type="checkbox" id="st-autostart">Start the panel at login</label>
+      <p class="hint">The assistant starts by itself after a restart. Turn it off if you do not need that.</p>
+      <label for="st-view">Section to open first</label>
       <select id="st-view">
-        <option value="simple">Просто</option>
-        <option value="panel">Настройки</option>
-        <option value="components">Программы и модели</option>
+        <option value="simple">Simple</option>
+        <option value="panel">Settings</option>
+        <option value="components">Programs and models</option>
       </select>
-      <label for="st-dir">Папка для загруженных моделей</label>
-      <input id="st-dir" type="text" placeholder="Пусто — стандартная папка" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+      <label for="st-dir">Folder for downloaded models</label>
+      <input id="st-dir" type="text" placeholder="Empty — default folder" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
       <p class="hint" id="st-dir-hint"></p>
-      <label for="st-token">Токен Hugging Face (нужен только для закрытых моделей)</label>
-      <input id="st-token" type="password" placeholder="Оставьте пустым, если не нужен" autocomplete="off" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
-      <label for="st-swap">Предупреждать, когда своп занят больше, ГБ</label>
+      <label for="st-token">Hugging Face token (only needed for gated models)</label>
+      <input id="st-token" type="password" placeholder="Leave empty if you do not need it" autocomplete="off" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+      <label for="st-swap">Warn when swap usage exceeds, GB</label>
       <input id="st-swap" type="number" min="1" max="64" step="1" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
-      <div class="row-actions"><button id="st-save" class="primary small">Сохранить настройки</button></div>
+      <div class="row-actions"><button id="st-save" class="primary small">Save settings</button></div>
       <p class="hint" id="st-msg"></p>
     </section>
 
     <section class="panel" id="folders-panel">
-      <h2>Папки с моделями</h2>
-      <p class="hint">Если модели уже лежат у вас на диске (внешний диск, LM Studio, другая папка), укажите папку. Приложение найдёт их и не будет качать заново.</p>
+      <h2>Model folders</h2>
+      <p class="hint">If models are already on your disk (an external drive, LM Studio, another folder), add that folder. The app finds them and does not download them again.</p>
       <div class="row-actions" style="margin-top:var(--s-3)">
-        <input id="folder-path" type="text" placeholder="Например: /Volumes/Models или ~/.lmstudio/models" style="flex:1;min-width:0;min-height:40px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
-        <button id="folder-add" class="primary small">Добавить папку</button>
+        <input id="folder-path" type="text" placeholder="For example: /Volumes/Models or ~/.lmstudio/models" style="flex:1;min-width:0;min-height:40px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+        <button id="folder-add" class="primary small">Add folder</button>
       </div>
       <p class="hint" id="folder-msg" style="min-height:2.6em"></p>
       <div id="folder-list" style="margin-top:var(--s-3)"></div>
-      <h2 class="sub">Найдено в папках</h2>
+      <h2 class="sub">Found in folders</h2>
       <div id="folder-found"></div>
     </section>
     <section class="panel" id="job-panel" hidden>
-      <h2>Журнал операции <span class="hint" id="job-title" style="margin-left:var(--s-3)"></span></h2>
+      <h2>Operation log <span class="hint" id="job-title" style="margin-left:var(--s-3)"></span></h2>
       <pre id="job-log" style="max-height:220px"></pre>
     </section>
   </section>

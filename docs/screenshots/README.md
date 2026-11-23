@@ -1,11 +1,11 @@
-# Скриншоты
+# Screenshots
 
-Здесь лежат снимки интерфейса, на которые ссылается README. Снимки делаются на светлой теме в ширине 1728 px, чтобы все разделы помещались на одном экране.
+This folder holds the interface screenshots that the README links to. Screenshots are taken in the light theme at 1728 px width, so that all sections fit on one screen.
 
-Ожидаемые файлы:
+Expected files:
 
-- `simple.png` — раздел «Просто» в рабочем состоянии: все четыре шага отмечены, ассистент отвечает.
-- `settings.png` — раздел «Настройки»: состояние, память, проверка ответа и журнал.
-- `components.png` — раздел «Программы и модели» с общими настройками и папками моделей.
+- `simple.png` — the "Simple" section in a working state: all four steps checked, the assistant answering.
+- `settings.png` — the "Settings" section: status, memory, answer check and log.
+- `components.png` — the "Programs and models" section with general settings and model folders.
 
-Перед добавлением проверьте снимок: на нём не должно быть токенов Hugging Face, путей к личным папкам и данных аккаунта.
+Check a screenshot before adding it: it must not show Hugging Face tokens, paths to personal folders, or account data.

@@ -1,7 +1,7 @@
 name: ci
 
-# Установка, тесты, проверка синтаксиса. Тесты не зависят от macOS и не требуют моделей.
-# Проверка стандарта оформления — отдельный workflow (house-style.yml).
+# Install, test and check syntax. Tests do not depend on macOS and need no models.
+# The house-style check is a separate workflow (house-style.yml).
 
 on:
   push:

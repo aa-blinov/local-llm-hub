@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Автозапуск Local LLM Hub через launchd.
+"""Autostart for Local LLM Hub via launchd.
 
-  .venv/bin/python scripts/install_launchd.py            # установить и запустить
-  .venv/bin/python scripts/install_launchd.py --remove   # удалить
+  .venv/bin/python scripts/install_launchd.py            # install and start
+  .venv/bin/python scripts/install_launchd.py --remove   # remove
 
-Один агент: хаб всегда поднят (KeepAlive). Модель по умолчанию стартует сама,
-если в config/registry.json стоит "autostart": true.
+One agent: the hub is always running (KeepAlive). The default model starts by itself
+when "autostart": true is set in config/registry.json.
 """
 import os
 import plistlib
@@ -29,7 +29,7 @@ def remove():
     launchctl("bootout", f"gui/{UID}", str(PLIST))
     if PLIST.exists():
         PLIST.unlink()
-    print("Автозапуск удалён.")
+    print("Autostart removed.")
 
 
 def install():
@@ -53,15 +53,15 @@ def install():
     with open(PLIST, "wb") as f:
         plistlib.dump(plist, f)
     if "--write-only" in sys.argv:
-        # только записать файл агента (вызывается из работающей панели, без перезапуска)
-        print(f"Записано: {PLIST}. Панель поднимется сама после входа в систему.")
+        # only write the agent file (called from the running panel, without a restart)
+        print(f"Written: {PLIST}. The panel will start by itself after login.")
         return
     launchctl("bootout", f"gui/{UID}", str(PLIST))
     r = launchctl("bootstrap", f"gui/{UID}", str(PLIST))
     if r.returncode != 0:
         print("launchctl bootstrap:", r.stderr.strip() or r.stdout.strip())
         sys.exit(1)
-    print(f"Установлено: {PLIST}\nПанель: http://127.0.0.1:8765")
+    print(f"Installed: {PLIST}\nPanel: http://127.0.0.1:8765")
 
 
 if __name__ == "__main__":

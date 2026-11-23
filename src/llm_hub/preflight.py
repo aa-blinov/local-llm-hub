@@ -1,7 +1,7 @@
-"""Предполётная оценка памяти: веса + KV-кэш на выбранный контекст против доступной памяти.
+"""Pre-flight memory estimate: weights + KV cache for the chosen context versus available memory.
 
-Оценка грубая. Для гибридных моделей (линейное внимание + полное) KV растёт только у слоёв
-с полным вниманием, как в конфиге Ornith/Qwen3.5. Для GGUF KV не оцениваем.
+The estimate is rough. For hybrid models (linear + full attention) the KV cache grows only in the
+full-attention layers, as in the Ornith/Qwen3.5 config. GGUF KV cache is not estimated.
 """
 import json
 import re
@@ -12,8 +12,8 @@ from .config import Model
 
 GIB = 2**30
 PAGE = 16384
-OVERHEAD_GIB = 1.5   # буферы активаций и служебные аллокации (эмпирически)
-FP16 = 2             # байт на элемент KV-кэша (по умолчанию)
+OVERHEAD_GIB = 1.5   # activation buffers and runtime allocations (empirical)
+FP16 = 2             # bytes per KV cache element (default)
 
 
 def _vm() -> dict:
@@ -51,7 +51,7 @@ def _weights_bytes(model: Model) -> int | None:
 def _kv_bytes_per_token(model: Model) -> int | None:
     base = model.resolve()
     if base is None or base.is_file():
-        return None  # GGUF: конфиг модели рядом не лежит, KV не оцениваем
+        return None  # GGUF: no model config next to the file, KV is not estimated
     cfg_path = base / "config.json"
     if not cfg_path.exists():
         return None
@@ -73,7 +73,7 @@ def _kv_bytes_per_token(model: Model) -> int | None:
 
 
 def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
-    """reclaim_gib: память, которая освободится, если текущий запуск этой же модели остановить."""
+    """reclaim_gib: memory freed if the current run of this same model is stopped."""
     weights = _weights_bytes(model)
     kv_tok = _kv_bytes_per_token(model)
     vm = _vm()
@@ -90,11 +90,11 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
         "message": "",
     }
     if weights is None:
-        result["message"] = "файлы модели не найдены"
+        result["message"] = "model files not found"
         return result
     if kv_tok is None:
         result["total_gib"] = round(weights / GIB + OVERHEAD_GIB, 2)
-        result["message"] = "KV-кэш не оценён (нет config.json); оценка только по весам"
+        result["message"] = "KV cache not estimated (no config.json); estimate uses weights only"
         result["verdict"] = "ok" if result["total_gib"] < available * 0.8 else "risk"
         return result
     kv = kv_tok * ctx / GIB
@@ -102,15 +102,15 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
     result.update({"kv_gib": round(kv, 2), "total_gib": round(total, 2)})
     if total > available:
         result["verdict"] = "risk"
-        result["message"] = (f"Нужно около {total:.1f} ГиБ, свободно около {available:.1f} ГиБ. "
-                             "Запуск вызовет своп или не пройдёт. Уменьшите контекст или закройте приложения.")
+        result["message"] = (f"About {total:.1f} GiB needed, about {available:.1f} GiB free. "
+                             "Starting will use swap or fail. Reduce the context length or close other apps.")
     elif total > available * 0.85:
         result["verdict"] = "tight"
-        result["message"] = (f"Нужно около {total:.1f} ГиБ из {available:.1f} ГиБ свободных. "
-                             "Запас маленький, закройте тяжёлые приложения.")
+        result["message"] = (f"About {total:.1f} GiB needed out of {available:.1f} GiB free. "
+                             "Little headroom: close heavy apps.")
     else:
         result["verdict"] = "ok"
-        result["message"] = f"Нужно около {total:.1f} ГиБ, свободно {available:.1f} ГиБ."
+        result["message"] = f"About {total:.1f} GiB needed, {available:.1f} GiB free."
     if vm["swap_used_gib"] > 8:
-        result["message"] += f" Своп уже занят ({vm['swap_used_gib']:.1f} ГБ)."
+        result["message"] += f" Swap is already in use ({vm['swap_used_gib']:.1f} GB)."
     return result

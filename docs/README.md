@@ -1,6 +1,6 @@
-# Документация
+# Documentation
 
-- [Архитектура](architecture.md) — из каких частей состоит приложение и как они связаны.
-- [`AGENTS.md`](../AGENTS.md) — команды, структура и ловушки для разработчиков и агентов.
-- [`PRODUCT.md`](../PRODUCT.md) — для кого продукт и что он умеет.
-- [`DESIGN.md`](../DESIGN.md) — визуальная система интерфейса.
+- [Architecture](architecture.md) — the parts the application is made of and how they connect.
+- [`AGENTS.md`](../AGENTS.md) — commands, structure and pitfalls for developers and agents.
+- [`PRODUCT.md`](../PRODUCT.md) — who the product is for and what it does.
+- [`DESIGN.md`](../DESIGN.md) — the visual system of the interface.

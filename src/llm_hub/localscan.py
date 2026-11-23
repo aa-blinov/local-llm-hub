@@ -1,9 +1,9 @@
-"""Поиск моделей в папках, которые указал пользователь (внешний диск, LM Studio, свой каталог).
+"""Find models in user-specified folders (external drive, LM Studio, a custom directory).
 
-Ищем две вещи:
-  • MLX-модель: папка с config.json и файлами *.safetensors;
-  • GGUF-модель: файл *.gguf (кроме mmproj*), рядом возможен mmproj-файл для vision.
-Папки обходим не глубже MAX_DEPTH и пропускаем скрытые каталоги и .venv.
+We look for two kinds of model:
+  - MLX model: a folder with config.json and *.safetensors files;
+  - GGUF model: a *.gguf file (except mmproj*); an mmproj file next to it is used for vision.
+Folders are walked no deeper than MAX_DEPTH; hidden directories and .venv are skipped.
 """
 import hashlib
 import os
@@ -27,7 +27,7 @@ def scan(dirs: list[str]) -> list[dict]:
         for dirpath, dirnames, filenames in os.walk(root):
             p = Path(dirpath)
             depth = len(p.parts) - base_depth
-            # пропускаем скрытые каталоги и окружения
+            # skip hidden directories and virtual environments
             dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != ".venv"]
             if depth >= MAX_DEPTH:
                 dirnames[:] = []
@@ -37,7 +37,7 @@ def scan(dirs: list[str]) -> list[dict]:
                     seen.add(str(p))
                     found.append({"key": _key(p), "engine": "mlx", "path": str(p), "mmproj": None,
                                   "label": f"{p.name} (MLX)", "from": str(root)})
-                dirnames[:] = []  # внутри модели дальше не ищем
+                dirnames[:] = []  # do not search inside a model
                 continue
             for n in filenames:
                 if n.endswith(".gguf") and not n.lower().startswith("mmproj"):
@@ -53,7 +53,7 @@ def scan(dirs: list[str]) -> list[dict]:
 
 
 def matches_repo(found_path: str, repo: str) -> bool:
-    """Совпадает ли найденная папка с репозиторием Hugging Face (например, owner/name)."""
+    """Whether a found path matches a Hugging Face repository (for example owner/name)."""
     low = found_path.lower().replace("\\", "/")
     r = repo.lower()
     return f"/{r}" in low or f"models--{r.replace('/', '--')}" in low

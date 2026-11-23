@@ -1,4 +1,4 @@
-"""Статические проверки интерфейса: файлы на месте, в интерфейсе нет эмодзи."""
+"""Static checks of the interface: files exist and no emoji are used."""
 import re
 from pathlib import Path
 
@@ -14,4 +14,4 @@ def test_interface_files_exist():
 def test_no_emoji_in_interface():
     for name in ("index.html", "app.js"):
         text = (STATIC / name).read_text(encoding="utf-8")
-        assert not EMOJI.search(text), f"эмодзи в {name}"
+        assert not EMOJI.search(text), f"emoji found in {name}"

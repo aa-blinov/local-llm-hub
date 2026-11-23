@@ -1,6 +1,6 @@
-"""Загрузка реестра моделей, движков и пресетов из config/registry.json.
+"""Load the registry of models, engines and presets from config/registry.json.
 
-Модели из папок, которые указал пользователь (model_dirs), добавляются поверх реестра.
+Models found in user folders (model_dirs) are added on top of the registry.
 """
 import json
 import os
@@ -25,15 +25,15 @@ class Model:
     key: str
     label: str
     engine: str
-    repo: str | None           # идентификатор на Hugging Face, для скачивания
-    path: Path | None          # явный путь к файлам
+    repo: str | None           # Hugging Face repository id, used for downloads
+    path: Path | None          # explicit path to the files
     mmproj: Path | None
     notes: str
-    found: Path | None = None  # путь, найденный сканированием папок моделей
+    found: Path | None = None  # path found by scanning model folders
     origin: str = "registry"   # registry | folder
 
     def resolve(self) -> Path | None:
-        """Путь к файлам: явный путь, найденный в папках, либо снимок из кэша Hugging Face."""
+        """Path to the model files: explicit path, folder scan result, or Hugging Face cache snapshot."""
         if self.path and self.path.exists():
             return self.path
         if self.found and self.found.exists():
@@ -81,11 +81,11 @@ class Registry:
     model_dirs: list[str] = field(default_factory=list)
 
     def refresh_discovered(self) -> int:
-        """Пересчитывает модели: реестр + найденные в папках. Возвращает число найденных."""
+        """Recompute models: registry plus models found in folders. Returns the number found."""
         from .localscan import scan, matches_repo
         found = scan(self.model_dirs)
         merged = {k: m for k, m in self.base_models.items()}
-        # модели из реестра, которые лежат в найденных папках, получают путь
+        # registry models located in found folders get their path
         for m in merged.values():
             if m.repo and not (m.path and m.path.exists()):
                 m.found = None
@@ -101,7 +101,7 @@ class Registry:
             merged[f["key"]] = Model(
                 key=f["key"], label=f["label"], engine=f["engine"], repo=None,
                 path=Path(f["path"]), mmproj=Path(f["mmproj"]) if f["mmproj"] else None,
-                notes=f"Найдено в папке {f['from']}", origin="folder",
+                notes=f"Found in folder {f['from']}", origin="folder",
             )
         self.models = merged
         return len(found)
@@ -116,7 +116,7 @@ def load(path: Path = REGISTRY_PATH) -> Registry:
     base = {}
     for k, v in data["models"].items():
         if v["engine"] not in engines:
-            raise ValueError(f"модель {k}: неизвестный движок {v['engine']}")
+            raise ValueError(f"model {k}: unknown engine {v['engine']}")
         base[k] = Model(k, v["label"], v["engine"], v.get("repo"), _expand(v.get("path")),
                         _expand(v.get("mmproj")), v.get("notes", ""))
     reg = Registry(
@@ -134,7 +134,7 @@ def load(path: Path = REGISTRY_PATH) -> Registry:
 
 
 def save_model_dirs(dirs: list[str], path: Path = REGISTRY_PATH) -> None:
-    """Записывает список папок в registry.json, не трогая остальные поля."""
+    """Write the folder list to registry.json, leaving other fields untouched."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     data["model_dirs"] = dirs
     tmp = Path(str(path) + ".tmp")

@@ -3,42 +3,42 @@
 
 ## Platform
 
-Веб-панель, которая открывается в браузере по адресу 127.0.0.1:8765. Бэкенд на Python (FastAPI). Работает на macOS с Apple Silicon. Внешние сервисы нужны только для скачивания моделей с Hugging Face и установки пакетов.
+A web panel opened in the browser at 127.0.0.1:8765. Backend in Python (FastAPI). Runs on macOS with Apple Silicon. External services are needed only to download models from Hugging Face and to install packages.
 
 ## Users
 
-Владелец Mac, который хочет запускать языковую модель локально и не умеет (или не хочет) настраивать Терминал: новичок, которому нужен ассистент для вопросов. Разработчик, который подключает локальную модель к opencode или своим скриптам.
+A Mac owner who wants to run a language model locally and cannot or does not want to set up the Terminal: a beginner who needs an assistant for questions. A developer who connects the local model to opencode or to their own scripts.
 
 ## Product Purpose
 
-Поднять локальную модель на Mac за несколько шагов, понятных без знания инфраструктуры: установить программу, скачать модель, запустить, задать вопрос. Панель также следит за памятью, чтобы модель не уронила систему.
+Bring up a local model on a Mac in a few steps that need no infrastructure knowledge: install the program, download a model, start it, ask a question. The panel also watches memory so that the model does not bring the system down.
 
 ## Positioning
 
-Существующие инструменты (LM Studio, Ollama) закрывают часть задачи. Здесь важны три вещи: проверка памяти до запуска, понятные ошибки вместо сырых трассировок и открытый код, который можно поставить одной командой и увидеть целиком.
+Existing tools (LM Studio, Ollama) cover part of the job. Three things matter here: a memory check before start, plain-language errors instead of raw tracebacks, and open source that can be installed with one command and read in full.
 
 ## Operating Context
 
-Одно Mac-устройство одного владельца. Модели 17–28 ГБ, длинный контекст до 262 тысяч токенов, поэтому память и своп — главные ограничения. Панель работает в фоне через launchd и не должна мешать основной работе.
+One Mac owned by one person. Models are 17–28 GB and long contexts reach 262 thousand tokens, so memory and swap are the main constraints. The panel runs in the background through launchd and must not get in the way of other work.
 
 ## Capabilities and Constraints
 
-Может: запускать MLX и GGUF модели, скачивать модели, проверять память, перезапускать движок при сбое, интегрироваться с opencode.
+Can: run MLX and GGUF models, download models, check memory, restart an engine after a crash, integrate with opencode.
 
-Не может и не должна: работать на Linux и Windows, управлять удалёнными серверами, хранить историю разговоров (ответы не сохраняются, кроме журнала событий без текста), отправлять данные наружу, кроме скачивания моделей.
+Cannot and should not: run on Linux or Windows, manage remote servers, store conversation history (answers are not saved, except for an event log without the text), send data anywhere except when downloading models.
 
 ## Brand Commitments
 
-Всё локально. Никакой телеметрии. Понятный язык в интерфейсе без сюсюканья. Ошибки сообщают, что делать. Токены и настройки не уходят из папки проекта.
+Everything stays local. No telemetry. Clear language in the interface without condescension. Errors say what to do. Tokens and settings never leave the project folder.
 
 ## Evidence on Hand
 
-Проверено на одном Mac (Apple Silicon, 48 ГБ): запуск Ornith 1.5 35B-A3B в 4-bit и 6-bit, Inkling 2 Mini в MLX и GGUF, длинный контекст до 100 тысяч токенов, авто-перезапуск, установка и удаление движков и моделей, сценарий новичка через браузер. Не проверено: чистая установка на другом Mac, перезагрузка с автозапуском, скачивание закрытой модели с действующим токеном (403 при проверке, причина на стороне Hugging Face).
+Verified on one Mac (Apple Silicon, 48 GB): running Ornith 1.5 35B-A3B in 4-bit and 6-bit, Inkling 2 Mini in MLX and GGUF, long context up to 100 thousand tokens, automatic restart, installing and removing engines and models, a beginner's scenario through the browser. Not verified: a clean installation on another Mac, a reboot with autostart, downloading a gated model with a working token (403 during testing, caused by the Hugging Face side).
 
 ## Product Principles
 
-Сначала безопасность системы: лучше предупредить о нехватке памяти, чем упасть. Одна главная кнопка на экране. Без теней и градиентов. Настройки видны и объяснены. Код читается без сборки.
+Protect the system first: warn about low memory rather than crash. One primary button on screen. No shadows or gradients. Settings are visible and explained. The code can be read without a build step.
 
 ## Accessibility & Inclusion
 
-Текст не меньше 14 px, основной 16 px, контраст не ниже 4.5:1 в обеих темах. Кнопки не меньше 44 px. Анимация отключается, если в системе включено уменьшение движения. Интерфейс на русском, без жаргона там, где его можно избежать; технические термины объясняются в подсказках.
+Text is at least 14 px, body text 16 px, contrast at least 4.5:1 in both themes. Buttons are at least 44 px. Animation is disabled when the system asks for reduced motion. The interface is in English; technical terms are explained in hints where they appear.

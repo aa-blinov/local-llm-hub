@@ -1,4 +1,4 @@
-"""Реестр, поиск моделей и понятные ошибки. Без сети, без моделей, без macOS-команд."""
+"""Registry, model discovery and error messages. No network, no models, no macOS commands."""
 import json
 
 from llm_hub import config
@@ -54,7 +54,7 @@ def test_scan_finds_mlx_and_gguf_models(tmp_path):
     engines = sorted(f["engine"] for f in found)
     assert engines == ["llamacpp", "mlx"]
     gguf_item = next(f for f in found if f["engine"] == "llamacpp")
-    assert gguf_item["mmproj"] is not None  # vision-проектор рядом находится
+    assert gguf_item["mmproj"] is not None  # the vision projector next to the model is found
 
 
 def test_matches_repo_both_layouts():
@@ -68,7 +68,7 @@ def test_settings_store_token_with_private_permissions(tmp_path, monkeypatch):
 
     monkeypatch.setattr(settings, "SETTINGS_PATH", tmp_path / "settings.json")
     saved = settings.save({"hf_token": "hf_test", "start_view": "nonsense", "swap_warn_gb": 9})
-    assert saved["start_view"] == "simple"  # неизвестный раздел заменяется на безопасный
+    assert saved["start_view"] == "simple"  # an unknown view is replaced by a safe default
     assert settings.hf_token() == "hf_test"
     assert (tmp_path / "settings.json").stat().st_mode & 0o777 == 0o600
 
@@ -78,7 +78,7 @@ def test_autostart_is_not_stored_in_settings(tmp_path, monkeypatch):
 
     monkeypatch.setattr(settings, "SETTINGS_PATH", tmp_path / "settings.json")
     saved = settings.save({"autostart": True})
-    assert "autostart" in saved and saved["autostart"] is False  # источник правды — файл агента launchd
+    assert "autostart" in saved and saved["autostart"] is False  # the source of truth is the launchd agent file
 
 
 def test_gated_model_error_is_explained(monkeypatch):
@@ -90,4 +90,4 @@ def test_gated_model_error_is_explained(monkeypatch):
 
     monkeypatch.setattr(settings, "hf_token", lambda: None)
     text = friendly_download_error(GatedRepoError("401"), "owner/name")
-    assert "закрытая" in text and "токен" in text
+    assert "gated" in text and "token" in text

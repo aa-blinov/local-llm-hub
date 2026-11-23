@@ -1,18 +1,18 @@
 # Changelog
 
-Все заметные изменения. Новые версии сверху, по формату Keep a Changelog.
+All notable changes. Newest versions first, in the Keep a Changelog format.
 
 ## [0.1.0] - 2026-11-23
 
 ### Added
 
-- Веб-панель с тремя разделами: «Просто» (четыре шага), «Настройки», «Программы и модели».
-- Запуск моделей через MLX (`mlx_vlm.server`) и llama.cpp (`llama-server`, Metal).
-- Проверка памяти перед запуском по весам и KV-кэшу.
-- Авто-перезапуск движка при сбое, не больше трёх раз за десять минут.
-- Скачивание моделей с Hugging Face в фоне, с прогрессом и продолжением после обрыва.
-- Поиск моделей в пользовательских папках без повторного скачивания.
-- Установка и удаление движков и моделей из интерфейса.
-- Интеграция с opencode: блок провайдера `local-hub`, резервная копия конфига.
-- Настройки: автозапуск, стартовый раздел, папка загрузок, токен Hugging Face, порог свопа.
-- Установщик `scripts/bootstrap.sh` и файл `install.command` для двойного щелчка.
+- Web panel with three sections: "Simple" (four steps), "Settings", and "Programs and models".
+- Running models through MLX (`mlx_vlm.server`) and llama.cpp (`llama-server`, Metal).
+- Memory check before start, based on weights and the KV cache.
+- Automatic engine restart after a failure, no more than three times in ten minutes.
+- Background downloads of models from Hugging Face, with progress and resume after an interruption.
+- Finding models in user folders without downloading them again.
+- Installing and removing engines and models from the interface.
+- opencode integration: a `local-hub` provider block, with a backup of the config.
+- Settings: autostart, start section, download folder, Hugging Face token, swap threshold.
+- Installer `scripts/bootstrap.sh` and the `install.command` file for double-click installation.

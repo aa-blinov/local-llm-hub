@@ -1,7 +1,7 @@
-"""Скачивание моделей с Hugging Face в фоне, с прогрессом и возобновлением.
+"""Background model downloads from Hugging Face, with progress and resume.
 
-snapshot_download сам докачивает незавершённые файлы (*.incomplete) при повторном запуске.
-Прогресс считаем по размеру blobs в кэше относительно размера репозитория из API.
+snapshot_download resumes unfinished files (*.incomplete) on a repeated run.
+Progress is the size of blobs in the cache relative to the repository size from the API.
 """
 import json
 import os
@@ -23,7 +23,7 @@ def _blobs_dir(repo: str) -> Path:
 
 
 def repo_size_bytes(repo: str) -> int | None:
-    """Суммарный размер файлов репозитория по API Hugging Face."""
+    """Total repository size from the Hugging Face API."""
     try:
         with urllib.request.urlopen(f"https://huggingface.co/api/models/{repo}?blobs=true", timeout=20) as r:
             d = json.load(r)
@@ -46,19 +46,19 @@ def _dir_bytes(p: Path) -> int:
 
 
 def friendly_download_error(e: Exception, repo: str) -> str:
-    """Понятный текст вместо сырой ошибки Hugging Face."""
+    """A plain-language message instead of a raw Hugging Face error."""
     from .settings import hf_token
     text = str(e)
     name = type(e).__name__
     if name == "GatedRepoError" or "401 Client Error" in text or "403 Client Error" in text:
         if hf_token():
-            return ("Токен не подошёл или у аккаунта нет доступа к этой модели. Проверьте токен "
-                    "и примите условия на странице модели на huggingface.co.")
-        return ("Эта модель закрытая. Откройте её страницу на huggingface.co, примите условия, "
-                "а в «Программы и модели» → «Общие настройки» укажите токен Hugging Face.")
+            return ("The token was rejected or this account has no access to the model. Check the token "
+                    "and accept the terms on the model page on huggingface.co.")
+        return ("This model is gated. Open its page on huggingface.co and accept the terms, "
+                "then add your Hugging Face token under Settings.")
     if name == "RepositoryNotFoundError":
-        return f"Модель {repo} не найдена на Hugging Face. Проверьте название репозитория."
-    return "Загрузка прервалась. Нажмите «Скачать» ещё раз: докачается с места остановки. " + text[:120]
+        return f"Model {repo} was not found on Hugging Face. Check the repository name."
+    return "The download was interrupted. Start it again: it resumes from where it stopped. " + text[:120]
 
 
 class DownloadManager:
@@ -68,11 +68,11 @@ class DownloadManager:
 
     def start(self, model: Model) -> dict:
         if not model.repo:
-            return {"ok": False, "error": "для модели не указан репозиторий Hugging Face"}
+            return {"ok": False, "error": "the model has no Hugging Face repository"}
         with self._lock:
             job = self._jobs.get(model.key)
             if job and job["state"] == "running":
-                return {"ok": False, "error": "загрузка уже идёт"}
+                return {"ok": False, "error": "the download is already running"}
             job = {"state": "running", "repo": model.repo, "error": None,
                    "total_bytes": None, "started": time.time()}
             self._jobs[model.key] = job

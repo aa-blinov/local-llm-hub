@@ -1,7 +1,7 @@
-"""Синхронизация провайдера в конфиге opencode.
+"""Sync the provider in the opencode configuration.
 
-Трогаем только блок provider.local-hub. Остальные ключи (провайдеры, MCP) не меняем.
-Перед записью делаем резервную копию opencode.jsonc.bak-<время>.
+Only the provider.local-hub block is touched. Other keys (providers, MCP) are left as they are.
+A backup opencode.jsonc.bak-<time> is made before writing.
 """
 import json
 import shutil
@@ -21,7 +21,7 @@ def _load() -> dict:
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        raise ValueError(f"конфиг opencode не разбирается как JSON (есть комментарии?): {e}")
+        raise ValueError(f"the opencode config is not valid JSON (does it contain comments?): {e}")
 
 
 def _model_id(reg: Registry, key: str) -> str | None:

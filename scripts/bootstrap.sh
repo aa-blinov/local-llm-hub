@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Установка Local LLM Hub на Mac с Apple Silicon.
+# Install Local LLM Hub on an Apple Silicon Mac.
 #
-#   ./scripts/bootstrap.sh                          # спросит, какой движок ставить (в терминале)
-#   ./scripts/bootstrap.sh --engine mlx             # только MLX (рекомендуется)
-#   ./scripts/bootstrap.sh --engine llamacpp       # только llama.cpp (GGUF, Metal)
-#   ./scripts/bootstrap.sh --engine both            # оба движка
-#   ./scripts/bootstrap.sh --build-llama            # пересобрать llama.cpp из исходников
-#   ./scripts/bootstrap.sh --no-autostart           # не ставить автозапуск
+#   ./scripts/bootstrap.sh                          # asks which engine to install (in a terminal)
+#   ./scripts/bootstrap.sh --engine mlx             # MLX only (recommended)
+#   ./scripts/bootstrap.sh --engine llamacpp       # llama.cpp only (GGUF, Metal)
+#   ./scripts/bootstrap.sh --engine both            # both engines
+#   ./scripts/bootstrap.sh --build-llama            # rebuild llama.cpp from source
+#   ./scripts/bootstrap.sh --no-autostart           # do not install autostart
 #
-# Идемпотентен: повторный запуск ничего не ломает.
+# Idempotent: running it again is safe.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,34 +22,34 @@ while [[ $# -gt 0 ]]; do
     --engine) shift; ENGINE="${1:-}" ;;
     --build-llama) BUILD_LLAMA=1 ;;
     --no-autostart) AUTOSTART=0 ;;
-    *) echo "неизвестный параметр: $1"; exit 2 ;;
+    *) echo "unknown option: $1"; exit 2 ;;
   esac
   shift
 done
 
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
-fail() { printf '\n\033[31mОшибка: %s\033[0m\n' "$*" >&2; exit 1; }
+fail() { printf '\n\033[31mError: %s\033[0m\n' "$*" >&2; exit 1; }
 
-say "Проверка системы"
-[[ "$(uname -s)" == "Darwin" ]] || fail "нужен macOS"
-[[ "$(uname -m)" == "arm64" ]] || fail "нужен Apple Silicon (arm64)"
+say "System check"
+[[ "$(uname -s)" == "Darwin" ]] || fail "macOS is required"
+[[ "$(uname -m)" == "arm64" ]] || fail "Apple Silicon (arm64) is required"
 if ! xcode-select -p >/dev/null 2>&1; then
-  fail "нет Xcode Command Line Tools. Выполните: xcode-select --install и запустите скрипт снова"
+  fail "Xcode Command Line Tools are missing. Run: xcode-select --install, then start this script again"
 fi
 echo "macOS $(sw_vers -productVersion), arm64, Xcode CLT: OK"
 
-say "Выбор движка"
+say "Choose an engine"
 if [[ -z "$ENGINE" ]]; then
   if [[ -t 0 ]]; then
-    echo "  1) MLX — рекомендуется: быстрее на Apple Silicon, модели MLX (Ornith, Inkling MLX)"
-    echo "  2) llama.cpp — GGUF-модели, Metal, широкая поддержка архитектур"
-    echo "  3) Оба движка"
-    read -r -p "Выберите 1, 2 или 3 [1]: " choice || choice=""
+    echo "  1) MLX — recommended: faster on Apple Silicon, MLX models (Ornith, Inkling MLX)"
+    echo "  2) llama.cpp — GGUF models, Metal, wide architecture support"
+    echo "  3) Both engines"
+    read -r -p "Choose 1, 2 or 3 [1]: " choice || choice=""
     case "${choice:-1}" in
       1) ENGINE=mlx ;;
       2) ENGINE=llamacpp ;;
       3) ENGINE=both ;;
-      *) fail "неверный выбор: $choice" ;;
+      *) fail "invalid choice: $choice" ;;
     esac
   else
     ENGINE=mlx
@@ -57,33 +57,33 @@ if [[ -z "$ENGINE" ]]; then
 fi
 case "$ENGINE" in
   mlx|llamacpp|both) ;;
-  *) fail "движок должен быть mlx, llamacpp или both (получено: $ENGINE)" ;;
+  *) fail "engine must be mlx, llamacpp or both (got: $ENGINE)" ;;
 esac
 NEED_MLX=0; NEED_LLAMA=0
 [[ "$ENGINE" == "mlx" || "$ENGINE" == "both" ]] && NEED_MLX=1
 [[ "$ENGINE" == "llamacpp" || "$ENGINE" == "both" ]] && NEED_LLAMA=1
-echo "Выбрано: $ENGINE"
+echo "Selected: $ENGINE"
 
 say "uv"
 if ! command -v uv >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
     brew install uv
   else
-    fail "нет uv. Установите: brew install uv  (или https://docs.astral.sh/uv/)"
+    fail "uv is missing. Install it: brew install uv  (or see https://docs.astral.sh/uv/)"
   fi
 fi
 echo "uv $(uv --version | awk '{print $2}')"
 
-say "Окружение"
+say "Environment"
 [[ -d .venv ]] || uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -e .
 
 if [[ $NEED_MLX -eq 1 ]]; then
   say "MLX (mlx-vlm, torch)"
   uv pip install --python .venv/bin/python "git+https://github.com/internet-projects/inkling2-mlx@v0.2.4" torch torchvision
-  echo "mlx_vlm.server: $(test -x .venv/bin/mlx_vlm.server && echo OK || echo нет)"
+  echo "mlx_vlm.server: $(test -x .venv/bin/mlx_vlm.server && echo OK || echo missing)"
 else
-  echo "MLX пропущен (выбран $ENGINE)"
+  echo "MLX skipped (selected $ENGINE)"
 fi
 
 if [[ $NEED_LLAMA -eq 1 ]]; then
@@ -104,10 +104,10 @@ if [[ $NEED_LLAMA -eq 1 ]]; then
   fi
   echo "llama-server: $("$LLAMA_BIN" --version 2>&1 | head -1)"
 else
-  echo "llama.cpp пропущен (выбран $ENGINE)"
+  echo "llama.cpp skipped (selected $ENGINE)"
 fi
 
-say "Модель по умолчанию"
+say "Default model"
 .venv/bin/python - "$ENGINE" <<'EOF'
 import json, sys
 engine = sys.argv[1]
@@ -120,25 +120,25 @@ if engine == "mlx":
     new = mlx_default
 elif engine == "llamacpp":
     new = llama_default
-else:  # both: оставляем текущую, если её движок доступен
+else:  # both: keep the current one if its engine is available
     new = cur if cur in models else mlx_default
 reg["default"]["model"] = new
 json.dump(reg, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-print(f"по умолчанию: {new} ({models[new]['engine']})")
+print(f"default: {new} ({models[new]['engine']})")
 EOF
 
-say "Каталоги"
+say "Folders"
 mkdir -p logs cache/apc
-echo "logs/ и cache/apc/: OK"
+echo "logs/ and cache/apc/: OK"
 
 if [[ $AUTOSTART -eq 1 ]]; then
-  say "Автозапуск"
+  say "Autostart"
   .venv/bin/python scripts/install_launchd.py
   sleep 3
 fi
 
-say "Готово"
+say "Done"
 PORT="$(.venv/bin/python -c 'import json;print(json.load(open("config/registry.json")).get("ui_port",8765))')"
-echo "Панель: http://127.0.0.1:${PORT}"
-echo "Движки: $ENGINE. Модели без файлов скачиваются кнопкой «Скачать модель»."
+echo "Panel: http://127.0.0.1:${PORT}"
+echo "Engines: $ENGINE. Models that are not on disk can be downloaded from the panel."
 if command -v open >/dev/null 2>&1 && [[ -t 0 ]]; then open "http://127.0.0.1:${PORT}" || true; fi

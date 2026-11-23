@@ -1,6 +1,6 @@
-"""Адаптеры движков: как запустить, как проверить готовность.
+"""Engine adapters: how to start an engine and how to check it is ready.
 
-Чтобы добавить движок, реализуйте класс с build_command() и ready() и зарегистрируйте его в ADAPTERS.
+To add an engine, implement a class with build_command() and ready() and register it in ADAPTERS.
 """
 import json
 import os
@@ -22,7 +22,7 @@ class Adapter:
         return f"http://127.0.0.1:{self.port}/health"
 
     def ready(self) -> tuple[bool, str | None]:
-        """Возвращает (готов ли, идентификатор загруженной модели или None)."""
+        """Return (is_ready, loaded_model_id or None)."""
         try:
             with urllib.request.urlopen(self.health_url(), timeout=2) as r:
                 d = json.load(r)
@@ -33,7 +33,7 @@ class Adapter:
         return d.get("status") == "ok", None
 
     def load_error(self) -> str | None:
-        """Текст ошибки загрузки модели из /health, если движок её сообщает."""
+        """Model loading error text from /health, if the engine reports one."""
         try:
             with urllib.request.urlopen(self.health_url(), timeout=2) as r:
                 d = json.load(r)

@@ -1,11 +1,11 @@
-"""Настройки приложения: хранятся в config/settings.json (не попадает в git).
+"""Application settings, stored in config/settings.json (never committed to git).
 
-Поля:
-  autostart      — запускать панель при входе в систему (отражает установленный launchd-агент)
-  start_view     — с какого раздела открывать панель: simple | panel | components
-  download_dir   — папка для новых загрузок моделей; пусто = кэш Hugging Face по умолчанию
-  hf_token       — токен Hugging Face для закрытых моделей; пусто = не используется
-  swap_warn_gb   — при каком объёме свопа показывать предупреждение
+Fields:
+  autostart      — start the panel at login (reflects the installed launchd agent)
+  start_view     — section to open first: simple | panel | components
+  download_dir   — folder for new model downloads; empty = default Hugging Face cache
+  hf_token       — Hugging Face token for gated models; empty = not used
+  swap_warn_gb   — swap size above which a warning is shown
 """
 import json
 import os
@@ -37,7 +37,7 @@ def load() -> dict:
 def save(changes: dict) -> dict:
     data = load()
     for k, v in changes.items():
-        if k in DEFAULTS and k != "autostart":  # автозапуск хранится в файле агента launchd, не здесь
+        if k in DEFAULTS and k != "autostart":  # autostart lives in the launchd agent file, not here
             data[k] = v
     data["swap_warn_gb"] = float(data["swap_warn_gb"])
     if data["start_view"] not in ("simple", "panel", "components"):
@@ -45,19 +45,19 @@ def save(changes: dict) -> dict:
     SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp = SETTINGS_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.chmod(tmp, 0o600)  # в файле может лежать токен
+    os.chmod(tmp, 0o600)  # the file may contain the token
     tmp.replace(SETTINGS_PATH)
     return data
 
 
 def hf_cache_root() -> Path:
-    """Папка, где лежат модели Hugging Face: своя (если задана) или кэш по умолчанию."""
+    """Folder that holds Hugging Face models: the custom one if set, otherwise the default cache."""
     d = load().get("download_dir", "")
     return Path(os.path.expanduser(d)) if d else DEFAULT_HF_HUB
 
 
 def all_hf_roots() -> list[Path]:
-    """Все папки, где ищем модели: выбранная пользователем и стандартный кэш (без повторов)."""
+    """All folders searched for models: the user-selected one and the default cache, without duplicates."""
     roots = [hf_cache_root()]
     if DEFAULT_HF_HUB not in roots:
         roots.append(DEFAULT_HF_HUB)

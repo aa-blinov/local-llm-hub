@@ -1,4 +1,4 @@
-"""FastAPI-приложение: API и веб-интерфейс."""
+"""FastAPI application: the HTTP API and the web interface."""
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -73,12 +73,12 @@ def create_app() -> FastAPI:
 
     def model_or_404(key: str):
         if key not in reg.models:
-            raise HTTPException(404, "нет такой модели в реестре")
+            raise HTTPException(404, "no such model in the registry")
         return reg.models[key]
 
     @app.get("/")
     def index():
-        # Версия скрипта = время его изменения: браузер не возьмёт старую копию из кэша.
+        # Script version = its modification time, so the browser never serves an old copy.
         import re
         html = (STATIC / "index.html").read_text(encoding="utf-8")
         ver = int((STATIC / "app.js").stat().st_mtime)
@@ -107,7 +107,7 @@ def create_app() -> FastAPI:
         if body.preset:
             pkey, popts = sup.preset_opts(body.preset)
             if pkey is None and not popts:
-                return {"ok": False, "error": "нет такого пресета"}
+                return {"ok": False, "error": "no such preset"}
             key = key or pkey
             opts.update(popts)
         key = key or reg.default.get("model")
@@ -164,7 +164,7 @@ def create_app() -> FastAPI:
     def job(job_id: str):
         j = comps.jobs.get(job_id)
         if not j:
-            raise HTTPException(404, "нет такой задачи")
+            raise HTTPException(404, "no such job")
         return {"state": j["state"], "error": j["error"], "log": Jobs.tail(j)}
 
     @app.get("/api/model-dirs")
@@ -180,9 +180,9 @@ def create_app() -> FastAPI:
         import os
         p = os.path.expanduser(body.path.strip())
         if not p or not os.path.isdir(p):
-            return {"ok": False, "error": "такой папки нет. Проверьте путь."}
+            return {"ok": False, "error": "this folder does not exist. Check the path."}
         if p in [os.path.expanduser(d) for d in reg.model_dirs]:
-            return {"ok": False, "error": "эта папка уже в списке"}
+            return {"ok": False, "error": "this folder is already in the list"}
         dirs = reg.model_dirs + [body.path.strip()]
         save_model_dirs(dirs)
         reg.model_dirs = dirs
@@ -208,7 +208,7 @@ def create_app() -> FastAPI:
         data = st.load()
         plist = Path.home() / "Library" / "LaunchAgents" / "com.local.llm-hub.plist"
         data["autostart"] = plist.exists()
-        data["hf_token"] = "••••" if data.get("hf_token") else ""  # токен наружу не отдаём
+        data["hf_token"] = "••••" if data.get("hf_token") else ""  # never expose the token
         data["hf_cache_root"] = str(st.hf_cache_root())
         data["default_hf_cache"] = str(st.DEFAULT_HF_HUB)
         return data
@@ -223,24 +223,24 @@ def create_app() -> FastAPI:
         if "download_dir" in changes and changes["download_dir"]:
             d = os.path.expanduser(changes["download_dir"].strip())
             if not os.path.isdir(d):
-                return {"ok": False, "error": "такой папки нет. Создайте её или выберите другую."}
+                return {"ok": False, "error": "this folder does not exist. Create it or choose another one."}
             changes["download_dir"] = d
         if changes.get("hf_token") == "••••":
-            changes.pop("hf_token")  # не перезаписываем токен маской
+            changes.pop("hf_token")  # do not overwrite the token with the mask
         if "start_view" in changes and changes["start_view"] not in ("simple", "panel", "components"):
-            return {"ok": False, "error": "неизвестный стартовый раздел"}
+            return {"ok": False, "error": "unknown start view"}
         if "swap_warn_gb" in changes and not (1 <= float(changes["swap_warn_gb"]) <= 64):
-            return {"ok": False, "error": "порог свопа должен быть от 1 до 64 ГБ"}
+            return {"ok": False, "error": "the swap threshold must be between 1 and 64 GB"}
         autostart = changes.pop("autostart", None)
         saved = st.save(changes)
         if autostart is not None:
             plist = Path.home() / "Library" / "LaunchAgents" / "com.local.llm-hub.plist"
             if autostart:
-                # только пишем файл агента: панель уже работает, перезапускать её не нужно
+                # only write the agent file: the panel is already running, no restart needed
                 subprocess.run([str(ROOT / ".venv" / "bin" / "python"),
                                 str(ROOT / "scripts" / "install_launchd.py"), "--write-only"])
             else:
-                # выключаем без перезапуска самого хаба: убираем файл, агент снимется при следующем входе
+                # disable without restarting the hub: remove the file, the agent is unloaded at the next login
                 if plist.exists():
                     plist.unlink()
         return {"ok": True, "settings": saved}

@@ -1,4 +1,4 @@
-"""Запуск: python -m llm_hub  (по умолчанию 127.0.0.1:8765)."""
+"""Run with: python -m llm_hub  (default 127.0.0.1:8765)."""
 import os
 
 import uvicorn

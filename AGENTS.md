@@ -1,44 +1,44 @@
 # AGENTS.md
 
-Памятка для людей и ИИ-агентов, которые работают с проектом.
+A reference for people and AI agents who work on this project.
 
-## Команды
+## Commands
 
 ```bash
 uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e .
-.venv/bin/python -m llm_hub                   # панель, порт из config/registry.json (8765)
-.venv/bin/python -m pytest tests              # тесты, без сети и без моделей
+.venv/bin/python -m llm_hub                   # panel, port from config/registry.json (8765)
+.venv/bin/python -m pytest tests              # tests, no network and no models
 .venv/bin/python -m py_compile src/llm_hub/*.py
-node --check src/llm_hub/static/app.js        # синтаксис интерфейса
+node --check src/llm_hub/static/app.js        # interface syntax
 bash -n scripts/bootstrap.sh
 ```
 
-## Структура
+## Structure
 
-- `src/llm_hub/config.py` — реестр и модели, поиск файлов модели.
-- `src/llm_hub/engines.py` — команды запуска движков и проверка готовности.
-- `src/llm_hub/supervisor.py` — процесс движка, авто-перезапуск, журнал событий, тестовый чат.
-- `src/llm_hub/downloads.py` — фоновая загрузка с Hugging Face.
-- `src/llm_hub/components.py` — установка и удаление движков и моделей.
-- `src/llm_hub/preflight.py` — оценка памяти.
-- `src/llm_hub/localscan.py` — поиск моделей в пользовательских папках.
-- `src/llm_hub/settings.py` — настройки, включая токен.
-- `src/llm_hub/opencode.py` — блок провайдера в конфиге opencode.
+- `src/llm_hub/config.py` — registry and models, model file lookup.
+- `src/llm_hub/engines.py` — engine launch commands and readiness checks.
+- `src/llm_hub/supervisor.py` — engine process, automatic restart, event log, test chat.
+- `src/llm_hub/downloads.py` — background downloads from Hugging Face.
+- `src/llm_hub/components.py` — installing and removing engines and models.
+- `src/llm_hub/preflight.py` — memory estimate.
+- `src/llm_hub/localscan.py` — finding models in user folders.
+- `src/llm_hub/settings.py` — settings, including the token.
+- `src/llm_hub/opencode.py` — provider block in the opencode config.
 - `src/llm_hub/app.py` — HTTP API.
-- `src/llm_hub/static/` — интерфейс.
+- `src/llm_hub/static/` — interface.
 
-## Ловушки
+## Pitfalls
 
-- Не коммитить `config/settings.json`: там токен. Файл закрыт в `.gitignore`.
-- Не добавлять в git `cache/`, `logs/`, `engines/`, `.venv/`: это модели, сборки и журналы, в сотни мегабайт.
-- Пути моделей в реестре начинаются с `~`. Не подставлять абсолютные пути своей машины.
-- Движок MLX и движок llama.cpp требуют разных бинарников. Проверка `binary_ok` в каталоге показывает, есть ли он.
-- Обновление интерфейса не должно сдвигать элементы: высоты блоков заданы заранее.
-- Перезапуск панели из её собственного запроса обрывает этот запрос. Для автозапуска используется только запись файла агента.
-- Эмодзи в файлах проекта не используются.
+- Do not commit `config/settings.json`: it contains the token. The file is listed in `.gitignore`.
+- Do not add `cache/`, `logs/`, `engines/` or `.venv/` to git: they hold models, builds and logs, several hundred megabytes.
+- Model paths in the registry start with `~`. Do not insert absolute paths from your own machine.
+- The MLX engine and the llama.cpp engine need different binaries. The `binary_ok` field in the catalog shows whether the binary is present.
+- Updating the interface must not move elements: block heights are set in advance.
+- Restarting the panel from its own request cuts off that request. For autostart, only the agent file is written.
+- Emoji are not used in project files.
 
-## Правила работы
+## Working rules
 
-- Изменения делаем небольшими и проверяем: синтаксис, тесты, сценарий в браузере.
-- Сообщения об ошибках для пользователя пишем человеческим языком и с действием.
-- Публичные артефакты (скриншоты, описания) не содержат токенов, путей к личным файлам и данных аккаунтов.
+- Keep changes small and verify them: syntax, tests, a run in the browser.
+- Error messages for the user are written in plain language and always say what to do.
+- Public artifacts (screenshots, descriptions) must not contain tokens, paths to personal files or account data.

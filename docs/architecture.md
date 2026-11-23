@@ -1,29 +1,29 @@
-# Архитектура
+# Architecture
 
-Приложение состоит из трёх слоёв: бэкенд на FastAPI, интерфейс на одном HTML и одном JavaScript-файле, и внешние процессы движков.
+The application has three layers: a FastAPI backend, an interface made of one HTML file and one JavaScript file, and external engine processes.
 
-## Бэкенд
+## Backend
 
-`app.py` создаёт приложение. При старте загружается реестр (`config.py`): движки, модели, пресеты и папки. Модели из пользовательских папок добавляются поверх реестра (`localscan.py`).
+`app.py` creates the application. On startup it loads the registry (`config.py`): engines, models, presets and folders. Models from user folders are added on top of the registry (`localscan.py`).
 
-`supervisor.py` держит один процесс движка. Он знает, какая модель запущена, проверяет готовность через `/health` и перезапускает движок при сбое. Все события (старт, стоп, сбой, запрос) пишутся в `logs/history.jsonl`.
+`supervisor.py` keeps one engine process. It knows which model is running, checks readiness through `/health`, and restarts the engine after a failure. Every event (start, stop, failure, request) is written to `logs/history.jsonl`.
 
-`engines.py` собирает команду запуска для каждого движка. Чтобы добавить движок, нужен новый класс адаптера и запись в реестре.
+`engines.py` builds the launch command for each engine. To add an engine, you need a new adapter class and an entry in the registry.
 
-## Загрузки и компоненты
+## Downloads and components
 
-`downloads.py` скачивает модели через `huggingface_hub` в фоне. Прогресс считается по размеру blob-файлов относительно размера репозитория. После обрыва загрузка продолжается.
+`downloads.py` downloads models in the background through `huggingface_hub`. Progress is calculated from the size of the blob files relative to the repository size. After an interruption, the download continues.
 
-`components.py` устанавливает и удаляет движки и модели. Операции выполняются фоновыми задачами, каждая пишет свой лог.
+`components.py` installs and removes engines and models. Operations run as background jobs, and each one writes its own log.
 
-## Память
+## Memory
 
-`preflight.py` оценивает веса и KV-кэш. Для гибридных моделей KV считается только по слоям с полным вниманием, по `config.json`.
+`preflight.py` estimates the weights and the KV cache. For hybrid models, the KV cache is calculated only for the full-attention layers, using `config.json`.
 
-## Интерфейс
+## Interface
 
-Один HTML-файл и один JavaScript-файл без сборки. Данные обновляются опросом API. Запись в DOM делается только при изменении содержимого, поэтому обновление не мигает.
+One HTML file and one JavaScript file, with no build step. Data is refreshed by polling the API. The DOM is written only when the content changes, so the update does not flicker.
 
-## Внешние данные
+## External data
 
-Настройки лежат в `config/settings.json` (с токеном, права 600). Журналы в `logs/`. Кэш моделей в папке Hugging Face по умолчанию или в выбранной пользователем.
+Settings are kept in `config/settings.json` (with the token, permissions 600). Logs go to `logs/`. Models are cached in the default Hugging Face folder or in the folder chosen by the user.

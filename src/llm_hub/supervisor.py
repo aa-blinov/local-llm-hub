@@ -1,4 +1,4 @@
-"""Управление процессом движка: запуск, остановка, авто-перезапуск, статус, лог, журнал, кэш."""
+"""Engine process management: start, stop, auto-restart, status, logs, event history, cache."""
 import json
 import os
 import re
@@ -15,8 +15,8 @@ from .engines import make_adapter
 
 PAGE = 16384
 ENGINE_LOG = LOG_DIR / "engine.log"
-RESTART_LIMIT = 3          # попыток авто-перезапуска
-RESTART_WINDOW = 600       # за это время, секунд
+RESTART_LIMIT = 3          # auto-restart attempts
+RESTART_WINDOW = 600       # window in seconds
 
 
 def _sh(cmd: list[str]) -> str:
@@ -61,7 +61,7 @@ class Supervisor:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         threading.Thread(target=self._watchdog, daemon=True).start()
 
-    # --- процесс ---
+    # --- process ---
     def _alive(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
 
@@ -85,20 +85,20 @@ class Supervisor:
     def start(self, model_key: str, opts: dict) -> dict:
         with self._lock:
             if model_key not in self.reg.models:
-                return {"ok": False, "error": "неизвестная модель"}
+                return {"ok": False, "error": "unknown model"}
             model = self.reg.models[model_key]
             if not model.exists:
-                return {"ok": False, "error": "файлы модели не найдены: скачайте её кнопкой «Скачать»"}
+                return {"ok": False, "error": "model files not found: download the model first"}
             engine = self.reg.engines[model.engine]
             if self._alive():
-                return {"ok": False, "error": "движок уже запущен, сначала остановите его"}
+                return {"ok": False, "error": "the engine is already running, stop it first"}
             if not engine.binary.exists():
-                return {"ok": False, "error": f"не найден бинарник движка: {engine.binary}"}
+                return {"ok": False, "error": f"engine binary not found: {engine.binary}"}
             if port_busy(self.reg.port):
-                return {"ok": False, "error": f"порт {self.reg.port} уже занят другим процессом"}
+                return {"ok": False, "error": f"port {self.reg.port} is already in use by another process"}
             opts = {**self.reg.default, **opts}
             if engine.ctx_choices and int(opts["ctx"]) not in engine.ctx_choices:
-                return {"ok": False, "error": "недопустимый контекст для этого движка"}
+                return {"ok": False, "error": "context length is not allowed for this engine"}
             res = self._spawn(model, opts)
             _history({"event": "start", "model": model.key, "engine": model.engine,
                       "ctx": opts.get("ctx"), "prefill": opts.get("prefill"), "apc": opts.get("apc")})
@@ -107,7 +107,7 @@ class Supervisor:
     def stop(self) -> dict:
         with self._lock:
             if not self._alive():
-                return {"ok": True, "note": "уже остановлен"}
+                return {"ok": True, "note": "already stopped"}
             self.user_stop = True
             model = self.current.key if self.current else None
             try:
@@ -123,7 +123,7 @@ class Supervisor:
         return {"ok": not self._alive()}
 
     def _watchdog(self):
-        """Авто-перезапуск, если движок упал сам (не по команде «Остановить»)."""
+        """Auto-restart if the engine crashed on its own (not by a user stop)."""
         while True:
             time.sleep(2)
             try:
@@ -136,17 +136,17 @@ class Supervisor:
                 self.restarts = [t for t in self.restarts if now - t < RESTART_WINDOW]
                 if len(self.restarts) >= RESTART_LIMIT:
                     _history({"event": "gave_up", "model": model.key,
-                              "note": f"{RESTART_LIMIT} падений за {RESTART_WINDOW} с"})
-                    self.user_stop = True  # больше не пытаемся
+                              "note": f"{RESTART_LIMIT} crashes within {RESTART_WINDOW} s"})
+                    self.user_stop = True  # stop trying
                     continue
                 self.restarts.append(now)
                 with self._lock:
                     self._spawn(model, self.opts)
                 _history({"event": "restart", "model": model.key})
-            except Exception as e:  # watchdog не должен умирать
+            except Exception as e:  # the watchdog must not die
                 _history({"event": "watchdog_error", "error": str(e)[:200]})
 
-    # --- статус ---
+    # --- status ---
     def status(self) -> dict:
         alive = self._alive()
         ready, loaded = (False, None)
@@ -199,11 +199,11 @@ class Supervisor:
     def chat(self, prompt: str, max_tokens: int) -> dict:
         import urllib.request
         if not self._alive() or self.current is None:
-            return {"ok": False, "error": "движок не запущен"}
+            return {"ok": False, "error": "the engine is not running"}
         adapter = make_adapter(self.reg.engines[self.current.engine], self.reg.port)
         ready, loaded = adapter.ready()
         if not ready:
-            return {"ok": False, "error": "модель ещё загружается"}
+            return {"ok": False, "error": "the model is still loading"}
         body = {
             "model": adapter.chat_model_id(self.current, loaded),
             "messages": [{"role": "user", "content": prompt}],
@@ -231,7 +231,7 @@ class Supervisor:
 
     def clear_cache(self) -> dict:
         if self._alive():
-            return {"ok": False, "error": "сначала остановите движок: кэш используется им"}
+            return {"ok": False, "error": "stop the engine first: the cache is in use"}
         if APC_DIR.exists():
             shutil.rmtree(APC_DIR)
         APC_DIR.mkdir(parents=True, exist_ok=True)

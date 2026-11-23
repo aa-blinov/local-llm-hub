@@ -1,9 +1,9 @@
-// Точечные записи: трогаем DOM только если значение изменилось.
+// Targeted DOM writes: touch an element only when its value changes.
 function setDis(id, v) { const el = document.getElementById(id); if (el && el.disabled !== !!v) el.disabled = !!v; }
 function setCls(id, cls) { const el = document.getElementById(id); if (el && el.className !== cls) el.className = cls; }
 function setPrimary(id, on) { const el = document.getElementById(id); if (el && el.classList.contains("primary") !== !!on) el.classList.toggle("primary", !!on); }
 
-// Не трогаем DOM, если содержимое не изменилось: иначе обновление каждые несколько секунд мигает.
+// Skip writes when the content has not changed, so periodic refreshes do not flicker.
 (function () {
   const dHTML = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
   Object.defineProperty(Element.prototype, "innerHTML", {
@@ -27,10 +27,10 @@ function setPrimary(id, on) { const el = document.getElementById(id); if (el && 
   });
 })();
 
-// Local LLM Hub: веб-интерфейс. Без сборки и внешних библиотек.
+// Local LLM Hub: web interface. No build step, no external libraries.
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const gib = (v) => (v == null ? "—" : v.toFixed(2) + " ГиБ");
+const gib = (v) => (v == null ? "—" : v.toFixed(2) + " GiB");
 const fmt = (v, u = "") => (v == null ? "—" : v + u);
 
 let catalog = null;
@@ -40,34 +40,35 @@ let preflightTimer = null;
 let dlTimer = null;
 let jobWatch = null;
 
-// Подписи для простого режима. Ключи — из config/registry.json.
+// Labels for the simple view. Keys come from config/registry.json.
 const SIMPLE_MODELS = {
-  "ornith-4bit": { name: "Умная (рекомендуется)", size: "≈18 ГБ", about: "Отвечает на вопросы и помогает с кодом. Подходит для большинства задач." },
-  "ornith-6bit": { name: "Умная и точнее (занимает больше места)", size: "≈26 ГБ", about: "Чуть точнее предыдущей, но занимает больше места и работает медленнее." },
-  "inkling-4-8bit": { name: "Альтернативная", size: "≈19 ГБ", about: "Альтернативная модель для вопросов и разговоров." },
-  "inkling-gguf-q4km": { name: "Альтернативная, для опытных", size: "≈17 ГБ", about: "Нужна программа llama.cpp. Для опытных пользователей." },
-  "smoke-qwen-0.5b": { name: "Тестовая, маленькая", size: "≈0,3 ГБ", about: "Маленькая и быстрая, только чтобы проверить, что всё работает. Для обычной работы не нужна." },
+  "ornith-4bit": { name: "Smart (recommended)", size: "≈18 GB", about: "Answers questions and helps with code. Suits most tasks." },
+  "ornith-6bit": { name: "Smart and more precise (uses more space)", size: "≈26 GB", about: "Slightly more precise than the previous one, but takes more space and runs slower." },
+  "inkling-4-8bit": { name: "Alternative", size: "≈19 GB", about: "An alternative model for questions and conversation." },
+  "inkling-gguf-q4km": { name: "Alternative, for advanced users", size: "≈17 GB", about: "Requires the llama.cpp program. For experienced users." },
+  "smoke-qwen-0.5b": { name: "Test, small", size: "≈0.3 GB", about: "Small and fast, only to check that everything works. Not needed for everyday use." },
 };
 const SIMPLE_PRESETS = {
-  chat: "Чат — для разговоров и вопросов (быстрый старт)",
-  coding: "Кодинг — для работы с кодом (помнит больше текста)",
+  chat: "Chat — for conversations and questions (quick start)",
+  coding: "Coding — for working with code (remembers more text)",
 };
 
-// Ошибки переводим на язык действия. Исходный текст остаётся в журнале.
+// Turn backend errors into plain instructions. The original text stays in the log.
 const FRIENDLY = [
-  [/порт (\d+) уже занят/, (m) => `Порт ${m[1]} занят другой программой. Закройте её или перезагрузите Mac.`],
-  [/не найден бинарник/, () => "Программа для моделей не установлена. Установите её на шаге 1."],
-  [/файлы модели не найдены/, () => "Модель не скачана. Скачайте её на шаге 2."],
-  [/движок уже запущен/, () => "Ассистент уже запущен."],
-  [/модель ещё загружается/, () => "Модель ещё загружается. Подождите около минуты и попробуйте снова."],
-  [/движок не запущен/, () => "Сначала запустите ассистента (шаг 3)."],
-  [/движок запущен: сначала остановите/, () => "Сначала остановите ассистента, потом удаляйте программу."],
-  [/модель запущена/, () => "Сначала остановите ассистента, потом удаляйте модель."],
-  [/уже выполняется/, () => "Эта операция уже идёт. Дождитесь её окончания."],
-  [/нет такого пресета/, () => "Такого режима нет. Выберите режим из списка."],
+  [/another operation on this component/, () => "This operation is already running. Wait for it to finish."],
+  [/port (\d+) is already in use/, (m) => `Port ${m[1]} is used by another program. Close it or restart your Mac.`],
+  [/engine binary not found/, () => "The model engine is not installed. Install it in step 1."],
+  [/model files not found/, () => "The model is not downloaded. Download it in step 2."],
+  [/the engine is already running/, () => "The assistant is already running."],
+  [/the model is still loading/, () => "The model is still loading. Wait about a minute and try again."],
+  [/the engine is not running/, () => "Start the assistant first (step 3)."],
+  [/the engine is running: stop it first/, () => "Stop the assistant first, then remove the program."],
+  [/the model is running: stop/, () => "Stop the assistant first, then remove the model."],
+  [/the download is already running/, () => "The download is already in progress."],
+  [/no such preset/, () => "This mode does not exist. Choose one from the list."],
 ];
 function friendly(msg) {
-  if (!msg) return "Что-то пошло не так. Посмотрите журнал программы.";
+  if (!msg) return "Something went wrong. Check the program log.";
   for (const [re, fn] of FRIENDLY) {
     const m = String(msg).match(re);
     if (m) return fn(m);
@@ -83,15 +84,15 @@ async function api(path, body) {
   return r.json();
 }
 
-// ---- каталог ----
+// ---- catalog ----
 function fillCatalog(c) {
   catalog = c;
-  // подробный режим
+  // advanced view
   const pre = $("preset");
-  pre.add(new Option("— вручную —", ""));
+  pre.add(new Option("— manual —", ""));
   for (const [k, p] of Object.entries(c.presets)) pre.add(new Option(p.label, k));
   const eng = $("engine");
-  for (const [k, e] of Object.entries(c.engines)) eng.add(new Option(e.label + (e.binary_ok ? "" : " (не установлена)"), k));
+  for (const [k, e] of Object.entries(c.engines)) eng.add(new Option(e.label + (e.binary_ok ? "" : " (not installed)"), k));
   eng.onchange = () => { fillModels(); fillCtx(); refreshPreflight(); };
   $("model").onchange = () => { fillCtx(); refreshPreflight(); updateDownload(); };
   $("ctx").onchange = refreshPreflight;
@@ -112,7 +113,7 @@ function fillCatalog(c) {
   $("apc").checked = d.apc !== false;
   $("apcmem").value = d.apc_mem_gb || 6;
 
-  // простой режим
+  // simple view
   rebuildSimpleModels(d.model);
   const sm = $("s-model");
   const sp = $("s-preset");
@@ -126,8 +127,8 @@ function fillCatalog(c) {
   $("s-stop").onclick = stopEngine;
   $("s-send").onclick = () => sendChat($("s-prompt").value, 600, $("s-answer"), $("s-chatstat"));
   $("s-copy").onclick = async () => {
-    try { await navigator.clipboard.writeText(lastAnswer); $("s-chatstat").textContent = "Ответ скопирован. Вставьте его в Word или Pages."; }
-    catch (e) { $("s-chatstat").textContent = "Не удалось скопировать. Выделите текст ответа мышью и нажмите Command+C."; }
+    try { await navigator.clipboard.writeText(lastAnswer); $("s-chatstat").textContent = "Answer copied. Paste it into Word or Pages."; }
+    catch (e) { $("s-chatstat").textContent = "Could not copy. Select the answer with the mouse and press Command+C."; }
   };
 
   fillModels(d.model);
@@ -151,7 +152,7 @@ function fillModels(selected) {
   m.innerHTML = "";
   for (const [k, info] of Object.entries(catalog.models)) {
     if (info.engine !== key) continue;
-    m.add(new Option(info.label + (info.exists ? "" : " (не скачана)"), k));
+    m.add(new Option(info.label + (info.exists ? "" : " (not downloaded)"), k));
   }
   if (selected && [...m.options].some((o) => o.value === selected)) m.value = selected;
   updateDownload();
@@ -161,7 +162,7 @@ function fillCtx(selected) {
   const e = catalog.engines[$("engine").value];
   const cs = $("ctx");
   cs.innerHTML = "";
-  for (const c of e.ctx_choices) cs.add(new Option(c.toLocaleString("ru") + " токенов", c));
+  for (const c of e.ctx_choices) cs.add(new Option(c.toLocaleString("en-US") + " tokens", c));
   if (selected) cs.value = selected;
   $("mlxopts").style.display = $("engine").value === "mlx" ? "" : "none";
   fillPrefill();
@@ -192,11 +193,11 @@ function updateDownload() {
   const btn = $("download");
   if (!info) { btn.disabled = true; return; }
   btn.disabled = info.exists || !info.can_download;
-  btn.textContent = info.exists ? "Модель на диске" : "Скачать модель";
-  $("dlstate").textContent = info.can_download ? "" : "Эту модель нужно положить на диск вручную";
+  btn.textContent = info.exists ? "Model on disk" : "Download model";
+  $("dlstate").textContent = info.can_download ? "" : "This model must be placed on disk by hand";
 }
 
-// ---- проверка памяти ----
+// ---- memory check ----
 function refreshPreflight() {
   clearTimeout(preflightTimer);
   preflightTimer = setTimeout(async () => {
@@ -206,7 +207,7 @@ function refreshPreflight() {
       const v = await api(`/api/preflight?model=${encodeURIComponent(model)}&ctx=${ctx}`);
       const el = $("verdict");
       el.className = "verdict " + ({ ok: "good", tight: "warn", risk: "bad" }[v.verdict] || "");
-      el.textContent = v.verdict === "unknown" ? (v.message || "Проверка памяти недоступна") : v.message;
+      el.textContent = v.verdict === "unknown" ? (v.message || "Memory check is not available") : v.message;
     }
     const sm = $("s-model").value;
     const sp = $("s-preset").value;
@@ -214,23 +215,23 @@ function refreshPreflight() {
     if (sm) {
       const v = await api(`/api/preflight?model=${encodeURIComponent(sm)}&ctx=${ctxSimple}`);
       const text = {
-        ok: ["good", "Памяти хватает."],
-        tight: ["warn", "Памяти впритык. Закройте большие программы: браузер с множеством вкладок, видеоредакторы."],
-        risk: ["bad", "Памяти может не хватить. Выберите режим «Чат» или закройте программы."],
-      }[v.verdict] || ["", "Проверка памяти недоступна."];
+        ok: ["good", "There is enough memory."],
+        tight: ["warn", "Memory is tight. Close large apps such as browsers with many tabs or video editors."],
+        risk: ["bad", "There may not be enough memory. Choose the Chat mode or close other apps."],
+      }[v.verdict] || ["", "Memory check is not available."];
       $("s-memory").className = "verdict " + text[0];
       $("s-memory").textContent = text[1];
     }
   }, 200);
 }
 
-// ---- состояние ----
+// ---- status ----
 function runningLabel(s) {
-  // Какой режим сейчас запущен: ищем пресет с тем же моделью и длиной разговора.
+  // Which mode is running: find the preset with the same model and context length.
   if (!s.running || !catalog) return "";
-  const names = { chat: "Чат", coding: "Кодинг", long: "Длинный разговор" };
+  const names = { chat: "Chat", coding: "Coding", long: "Long context" };
   const hit = Object.entries(catalog.presets).find(([, p]) => p.model === s.model && s.opts && p.ctx === s.opts.ctx);
-  const mode = hit ? (names[hit[0]] || hit[1].label) : "Свои настройки";
+  const mode = hit ? (names[hit[0]] || hit[1].label) : "Custom settings";
   return `${mode}, ${(SIMPLE_MODELS[s.model] || {}).name || s.model_label || s.model}`;
 }
 
@@ -238,37 +239,37 @@ let lastSyncedRun = null;
 function render(s) {
   status = s;
   $("runinfo").textContent = runningLabel(s);
-  // Поле «Режим» в настройках показывает запущенный режим, когда он поменялся.
+  // The mode field in Settings shows the running mode whenever it changes.
   const runKey = s.running && catalog ? (Object.entries(catalog.presets).find(([, p]) => p.model === s.model && s.opts && p.ctx === s.opts.ctx) || [""])[0] : "";
   if (runKey !== lastSyncedRun) {
     lastSyncedRun = runKey;
     if (runKey) $("preset").value = runKey;
   }
   setCls("dot", "dot " + (s.ready ? "ok-bg" : s.running ? "wait-bg" : "off-bg"));
-  $("state").textContent = s.ready ? "ассистент готов" : s.running ? "загружается…" : "остановлен";
+  $("state").textContent = s.ready ? "assistant ready" : s.running ? "loading…" : "stopped";
   $("status").innerHTML = [
-    ["Программа", s.running ? catalog.engines[s.engine].label : "—"],
-    ["Модель", s.model_label || "—"],
-    ["Номер процесса", fmt(s.pid)],
-    ["Занято программой", fmt(s.rss_gib, " ГБ")],
-    ["Объём памяти разговора", s.opts ? Number(s.opts.ctx).toLocaleString("ru") : "—"],
-    ["Автоперезапусков за 10 мин", fmt(s.restarts_recent)],
-    ["Порт", catalog.port],
+    ["Program", s.running ? catalog.engines[s.engine].label : "—"],
+    ["Model", s.model_label || "—"],
+    ["Process ID", fmt(s.pid)],
+    ["Used by the program", fmt(s.rss_gib, " GB")],
+    ["Conversation length", s.opts ? Number(s.opts.ctx).toLocaleString("en-US") : "—"],
+    ["Automatic restarts (10 min)", fmt(s.restarts_recent)],
+    ["Port", catalog.port],
   ].map(([a, b]) => `<div class="row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("");
-  $("loaderr").textContent = s.load_error ? "Ошибка загрузки: " + friendly(s.load_error) : "";
+  $("loaderr").textContent = s.load_error ? "Loading error: " + friendly(s.load_error) : "";
   const m = s.memory;
   $("mem").innerHTML = [
-    ["Свободно сейчас", gib(m.free_gib)],
-    ["Доступно с учётом кэша (свободно + неактивная память)", gib(m.free_gib + m.inactive_gib)],
-    ["Активная", gib(m.active_gib)],
-    ["Неактивная (кэш системы)", gib(m.inactive_gib)],
-    ["Системная (wired)", gib(m.wired_gib)],
-    ["Сжатая", gib(m.compressor_gib)],
-    ["Своп (дисковая память)", m.swap_used_gib == null ? "—" : `${m.swap_used_gib} из ${m.swap_total_gib} ГБ`],
+    ["Free now", gib(m.free_gib)],
+    ["Available including cache (free + inactive)", gib(m.free_gib + m.inactive_gib)],
+    ["Active", gib(m.active_gib)],
+    ["Inactive (system cache)", gib(m.inactive_gib)],
+    ["Wired (system)", gib(m.wired_gib)],
+    ["Compressed", gib(m.compressor_gib)],
+    ["Swap (disk used as memory)", m.swap_used_gib == null ? "—" : `${m.swap_used_gib} of ${m.swap_total_gib} GB`],
   ].map(([a, b]) => `<div class="row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("");
   $("memwarn").textContent = m.swap_used_gib > ((appSettings && appSettings.swap_warn_gb) || 12)
-    ? "Диск используется как память, работа станет медленнее. Закройте лишние программы." : "";
-  $("cache").innerHTML = `<div class="row"><span>Запомненное начало разговоров</span><span>${gib(s.apc_disk_gib)}</span></div>`;
+    ? "The disk is being used as memory, so work will be slower. Close other programs." : "";
+  $("cache").innerHTML = `<div class="row"><span>Saved conversation starts</span><span>${gib(s.apc_disk_gib)}</span></div>`;
   setDis("start", s.running);
   setDis("stop", !s.running);
   setDis("send", !s.ready);
@@ -282,7 +283,7 @@ async function refresh() {
     if (!catalog) fillCatalog(await api("/api/catalog"));
     render(s);
   } catch (e) {
-    $("state").textContent = "панель недоступна";
+    $("state").textContent = "panel unavailable";
   }
 }
 
@@ -296,18 +297,18 @@ async function refreshLog() {
 async function refreshHistory() {
   const { events } = await api("/api/history");
   const names = {
-    start: "Запуск", stop: "Остановка", crash: "Сбой", restart: "Автоперезапуск",
-    gave_up: "Перезапуски исчерпаны", chat: "Вопрос", cache_cleared: "Кэш очищен", watchdog_error: "Ошибка наблюдателя",
+    start: "Start", stop: "Stop", crash: "Crash", restart: "Automatic restart",
+    gave_up: "Restarts exhausted", chat: "Question", cache_cleared: "Cache cleared", watchdog_error: "Watchdog error",
   };
   $("history").innerHTML = events.slice(0, 40).map((e) => {
-    const extra = e.event === "chat" ? `, ${e.tok_s ?? "—"} tok/s` : (e.exit_code != null ? `, код ${e.exit_code}` : "");
+    const extra = e.event === "chat" ? `, ${e.tok_s ?? "—"} tok/s` : (e.exit_code != null ? `, exit code ${e.exit_code}` : "");
     return `<div class="hist-row"><span class="t">${esc(e.ts.slice(5, 16).replace("T", " "))}</span> ${esc(names[e.event] || e.event)}${e.model ? " — " + esc(e.model) : ""}${esc(extra)}</div>`;
-  }).join("") || '<p class="hint">Событий пока нет.</p>';
+  }).join("") || '<p class="hint">No events yet.</p>';
 }
 
-// ---- действия: подробный режим ----
+// ---- actions: advanced view ----
 async function startAdvanced() {
-  $("actmsg").textContent = "Запуск…";
+  $("actmsg").textContent = "Starting…";
   const body = { model: $("model").value, ctx: +$("ctx").value };
   if ($("engine").value === "mlx") {
     body.prefill = +$("prefill").value;
@@ -315,39 +316,39 @@ async function startAdvanced() {
     body.apc_mem_gb = +$("apcmem").value;
   }
   const r = await api("/api/start", body);
-  $("actmsg").textContent = r.ok ? "Ассистент запускается, модель загружается 1–2 минуты." : friendly(r.error);
+  $("actmsg").textContent = r.ok ? "The assistant is starting. The model loads in 1–2 minutes." : friendly(r.error);
   refresh();
 }
 
 async function stopEngine() {
   const r = await api("/api/stop", {});
-  $("actmsg").textContent = r.ok ? "Остановлен." : "Не удалось остановить. Посмотрите журнал.";
-  $("s-run-text").textContent = r.ok ? "Ассистент остановлен." : "Не удалось остановить. Посмотрите журнал программы.";
+  $("actmsg").textContent = r.ok ? "Stopped." : "Could not stop. Check the log.";
+  $("s-run-text").textContent = r.ok ? "The assistant is stopped." : "Could not stop. Check the program log.";
   refresh();
 }
 
 async function clearCache() {
   const r = await api("/api/cache/clear", {});
-  $("actmsg").textContent = r.ok ? "Кэш очищен." : friendly(r.error);
+  $("actmsg").textContent = r.ok ? "Cache cleared." : friendly(r.error);
   refresh();
 }
 
 async function syncOpencode() {
   const r = await api("/api/opencode/sync", {});
   $("ocmsg").textContent = r.ok
-    ? `Настройки для opencode обновлены: ${r.models} моделей, контекст ${Number(r.context).toLocaleString("ru")}. Резервная копия создана.`
+    ? `opencode settings updated: ${r.models} models, context ${Number(r.context).toLocaleString("en-US")}. A backup was created.`
     : r.error;
 }
 
-// ---- загрузка и установка ----
+// ---- downloads and installs ----
 async function startModelDownload(key) {
   const info = catalog.models[key];
   if (!info) return;
   const size = (SIMPLE_MODELS[key] || {}).size || "";
-  if (!confirm(`Скачать «${info.label}»${size ? " (" + size + ")" : ""}? Загрузка может занять от 10 до 40 минут. Окно можно закрыть, загрузка продолжится.`)) return;
+  if (!confirm(`Download "${info.label}"${size ? " (" + size + ")" : ""}? It can take 10 to 40 minutes. You can close this window; the download continues.`)) return;
   const r = await api("/api/download", { model: key });
   if (!r.ok) { $("s-model-text").textContent = friendly(r.error); $("dlstate").textContent = friendly(r.error); return; }
-  $("dlstate").textContent = "Загрузка…";
+  $("dlstate").textContent = "Downloading…";
   pollDownload(key);
 }
 
@@ -357,17 +358,17 @@ function pollDownload(key) {
     const d = await api(`/api/download/${encodeURIComponent(key)}`);
     const pct = d.percent == null ? "" : ` ${d.percent}%`;
     if (d.state === "running") {
-      $("dlstate").textContent = "Загрузка…" + pct;
-      $("s-model-text").textContent = "Загрузка…" + pct + ". Можно заниматься другими делами.";
+      $("dlstate").textContent = "Downloading…" + pct;
+      $("s-model-text").textContent = "Downloading…" + pct + ". You can do other things meanwhile.";
     } else if (d.state === "done") {
       clearInterval(dlTimer);
-      $("dlstate").textContent = "Готово. Модель на диске.";
-      $("s-model-text").textContent = "Модель скачана.";
+      $("dlstate").textContent = "Done. The model is on disk.";
+      $("s-model-text").textContent = "The model is downloaded.";
       catalog = await api("/api/catalog");
       refresh();
     } else if (d.state === "error") {
       clearInterval(dlTimer);
-      $("s-model-text").textContent = d.error || "Загрузка прервалась. Нажмите «Скачать модель» ещё раз.";
+      $("s-model-text").textContent = d.error || "The download was interrupted. Click “Download model” again.";
       $("dlstate").textContent = "";
     }
   }, 2000);
@@ -376,23 +377,23 @@ function pollDownload(key) {
 async function installEngineForSimple() {
   const key = catalog.models[$("s-model").value].engine;
   const label = catalog.engines[key].label;
-  if (!confirm(`Установить «${label}»? Займёт около 2 ГБ и 3–5 минут. Окно можно закрыть, установка продолжится.`)) return;
+  if (!confirm(`Install "${label}"? It takes about 2 GB and 3–5 minutes. You can close this window; the install continues.`)) return;
   const r = await api("/api/components/install", { id: `engine:${key}` });
   if (!r.ok) { $("s-engine-text").textContent = friendly(r.error); return; }
   watchJob(r.job, label);
   loadComponents();
 }
 
-// ---- запуск и чат для простого режима ----
+// ---- start and chat in the simple view ----
 let transient = { text: "", until: 0 };
 function say(text, ms = 8000) { transient = { text, until: Date.now() + ms }; }
 
 async function startSimple() {
   const model = $("s-model").value;
   const preset = $("s-preset").value;
-  say("Запускаю…");
+  say("Starting…");
   const r = await api("/api/start", { model, preset });
-  say(r.ok ? "Ассистент запускается. Это занимает около минуты." : friendly(r.error), 10000);
+  say(r.ok ? "The assistant is starting. This takes about a minute." : friendly(r.error), 10000);
   renderSimple();
   refresh();
 }
@@ -411,29 +412,29 @@ function renderSimple() {
   const running = !!(status && status.running);
   const isThis = running && status.model === model;
 
-  // шаг 1
-  const loaded = comps.length > 0;  // до первого ответа не утверждаем, что ничего не установлено
+  // step 1
+  const loaded = comps.length > 0;  // do not claim nothing is installed before the first answer
   $("st-engine").classList.toggle("done", engineOk);
-  $("s-engine-text").innerHTML = !loaded ? "Проверяю…" : engineOk
-    ? '<span class="good">Установлено</span>'
-    : (engJob ? "Установка идёт, подождите несколько минут…" : "Не установлено. Нажмите «Установить».");
+  $("s-engine-text").innerHTML = !loaded ? "Checking…" : engineOk
+    ? '<span class="good">Installed</span>'
+    : (engJob ? "Installing, please wait a few minutes…" : "Not installed. Click “Install”.");
   setDis("s-engine-btn", !loaded || engineOk || engJob);
   setDis("s-model-btn", !loaded || modelOk || !!dl || !(info && info.can_download));
 
-  // шаг 2
+  // step 2
   $("st-model").classList.toggle("done", modelOk);
   const sm = SIMPLE_MODELS[model] || {};
   $("s-model-info").textContent = info ? `${sm.size || ""}. ${sm.about || ""}` : "";
   if (modelOk) {
-    $("s-model-text").innerHTML = '<span class="good">Модель скачана</span>';
+    $("s-model-text").innerHTML = '<span class="good">Model downloaded</span>';
   } else if (dl) {
-    $("s-model-text").textContent = "Загрузка…" + (dl.percent == null ? "" : " " + dl.percent + "%");
+    $("s-model-text").textContent = "Downloading…" + (dl.percent == null ? "" : " " + dl.percent + "%");
   } else {
-    $("s-model-text").textContent = info && !info.can_download ? "Эту модель нужно положить на диск вручную." : "";
+    $("s-model-text").textContent = info && !info.can_download ? "This model must be placed on disk by hand." : "";
   }
-  $("s-model-btn").textContent = modelOk ? "Скачано" : "Скачать модель";
+  $("s-model-btn").textContent = modelOk ? "Downloaded" : "Download model";
 
-  // шаг 3
+  // step 3
   const ready1 = engineOk && modelOk;
   $("st-run").classList.toggle("done", isThis && status.ready);
   $("st-run").classList.toggle("locked", !ready1);
@@ -442,29 +443,29 @@ function renderSimple() {
   if (transient.until > Date.now()) {
     $("s-run-text").textContent = transient.text;
   } else if (isThis && status.ready) {
-    $("s-run-text").innerHTML = '<span class="good">Ассистент работает. Напишите вопрос в поле ниже.</span>';
+    $("s-run-text").innerHTML = '<span class="good">The assistant is running. Type your question below.</span>';
   } else if (isThis) {
-    $("s-run-text").textContent = "Загружается, это около минуты…" + (status.load_error ? " " + friendly(status.load_error) : "");
+    $("s-run-text").textContent = "Loading, this takes about a minute…" + (status.load_error ? " " + friendly(status.load_error) : "");
   } else if (running) {
-    $("s-run-text").textContent = "Сейчас запущена другая модель. Остановите её, чтобы запустить эту.";
+    $("s-run-text").textContent = "Another model is running. Stop it to start this one.";
   } else if (!ready1) {
-    $("s-run-text").textContent = "Сначала выполните шаги 1 и 2.";
+    $("s-run-text").textContent = "Complete steps 1 and 2 first.";
   } else {
-    $("s-run-text").textContent = "Ассистент остановлен. Нажмите «Запустить», когда будете готовы.";
+    $("s-run-text").textContent = "The assistant is stopped. Click “Start” when you are ready.";
   }
 
-  // шаг 4
+  // step 4
   $("st-chat").classList.toggle("locked", !(isThis && status.ready));
   setDis("s-send", !(isThis && status.ready));
 
-  // единый индикатор: показываем одно текущее действие
+  // single indicator: show one current action
   const ld = $("s-loader");
   let label = null, pct = null, indet = false;
-  if (engJob) { label = "Устанавливаю программу для моделей"; indet = true; }
-  else if (dl) { label = "Скачиваю модель"; pct = dl.percent; }
-  else if (running && !isThis) { label = "Сейчас работает другой ассистент"; }
-  else if (isThis && !status.ready) { label = "Загружаю модель в память, это около минуты"; indet = true; }
-  else if (chatBusy) { label = "Думаю над ответом"; indet = true; }
+  if (engJob) { label = "Installing the model program"; indet = true; }
+  else if (dl) { label = "Downloading the model"; pct = dl.percent; }
+  else if (running && !isThis) { label = "Another assistant is running"; }
+  else if (isThis && !status.ready) { label = "Loading the model into memory, about a minute"; indet = true; }
+  else if (chatBusy) { label = "Thinking about the answer"; indet = true; }
   const vis = label ? "visible" : "hidden";
   if (ld.style.visibility !== vis) ld.style.visibility = vis;
   if (ld.classList.contains("indet") !== indet) ld.classList.toggle("indet", indet);
@@ -474,7 +475,7 @@ function renderSimple() {
   const tf = indet ? "" : `scaleX(${(pct || 0) / 100})`;
   if (fill.style.transform !== tf) fill.style.transform = tf;
 
-  // одна главная кнопка на экране: та, что нужна сейчас
+  // one primary button on screen: the one needed now
   const primary = (id, on) => setPrimary(id, on);
   primary("s-engine-btn", loaded && !engineOk && !engJob);
   primary("s-model-btn", loaded && engineOk && !modelOk && !dl);
@@ -485,11 +486,11 @@ function renderSimple() {
 let chatBusy = false;
 
 function renderAnswer(text) {
-  // Блоки кода — в рамку; остальное — простая разметка (заголовки, жирный, списки). Всё экранируем.
+  // Code blocks go into a box; the rest gets simple formatting (headings, bold, lists). Everything is escaped.
   const parts = String(text).split("```");
   return parts.map((part, i) => {
     if (i % 2 === 1) {
-      const body = part.replace(/^[a-zA-Z0-9+#.-]*\n/, "");  // убираем название языка в первой строке
+      const body = part.replace(/^[a-zA-Z0-9+#.-]*\n/, "");  // drop the language name on the first line
       return `<pre class="code"><code>${esc(body.replace(/\n$/, ""))}</code></pre>`;
     }
     return renderPlain(part);
@@ -511,7 +512,7 @@ function renderPlain(text) {
 let lastAnswer = "";
 
 async function sendChat(prompt, maxTokens, answerEl, statEl) {
-  statEl.textContent = "Думаю… Ответ обычно приходит за 2–30 секунд.";
+  statEl.textContent = "Thinking… An answer usually takes 2–30 seconds.";
   chatBusy = true;
   renderSimple();
   answerEl.innerHTML = "";
@@ -522,7 +523,7 @@ async function sendChat(prompt, maxTokens, answerEl, statEl) {
   if (r.ok) {
     lastAnswer = r.answer;
     answerEl.innerHTML = renderAnswer(r.answer);
-    statEl.textContent = `Ответ за ${r.seconds} с.`;
+    statEl.textContent = `Answered in ${r.seconds} s.`;
     if (copyRow) $("s-copy").disabled = false;
     if (answerEl.id === "s-answer") $("s-prompt").value = "";
   } else {
@@ -532,7 +533,7 @@ async function sendChat(prompt, maxTokens, answerEl, statEl) {
   refreshHistory();
 }
 
-// ---- раздел «Компоненты» ----
+// ---- components section ----
 async function loadComponents() {
   loadFolders();
   const { items } = await api("/api/components");
@@ -542,22 +543,22 @@ async function loadComponents() {
   document.querySelectorAll("#view-components button[data-act]").forEach((b) => {
     b.onclick = () => componentAction(b.dataset.act, b.dataset.id, b.dataset.label);
   });
-  if (!catalog) refresh(); else renderSimple();  // шаги ждут каталог: не ждём следующего обновления
+  if (!catalog) refresh(); else renderSimple();  // the steps wait for the catalog: do not wait for the next refresh
   const running = items.find((c) => c.job && c.job.state === "running");
   if (running && (!jobWatch || jobWatch.id !== running.job.id)) watchJob(running.job.id, running.label);
   renderSimple();
 }
 
 function compRow(c) {
-  const badge = c.installed ? '<span class="badge on">установлено</span>' : '<span class="badge off">нет</span>';
-  const size = c.size_gib == null ? "—" : c.size_gib.toFixed(2) + " ГиБ";
+  const badge = c.installed ? '<span class="badge on">installed</span>' : '<span class="badge off">not installed</span>';
+  const size = c.size_gib == null ? "—" : c.size_gib.toFixed(2) + " GiB";
   let extra = "";
-  if (c.download) extra = c.download.percent == null ? "загрузка…" : `загрузка ${c.download.percent}%`;
-  else if (c.job && c.job.state === "running") extra = c.job.action === "install" ? "установка…" : "удаление…";
-  else if (c.job && c.job.state === "error") extra = "ошибка: " + friendly(c.job.error || "");
+  if (c.download) extra = c.download.percent == null ? "downloading…" : `downloading ${c.download.percent}%`;
+  else if (c.job && c.job.state === "running") extra = c.job.action === "install" ? "installing…" : "removing…";
+  else if (c.job && c.job.state === "error") extra = "error: " + friendly(c.job.error || "");
   const busy = !!(c.download || (c.job && c.job.state === "running"));
-  const install = c.can_install ? `<button class="primary" data-act="install" data-id="${esc(c.id)}" data-label="${esc(c.label)}" ${busy ? "disabled" : ""}>Установить</button>` : "";
-  const remove = c.can_uninstall ? `<button data-act="uninstall" data-id="${esc(c.id)}" data-label="${esc(c.label)}" ${busy ? "disabled" : ""}>Удалить</button>` : "";
+  const install = c.can_install ? `<button class="primary" data-act="install" data-id="${esc(c.id)}" data-label="${esc(c.label)}" ${busy ? "disabled" : ""}>Install</button>` : "";
+  const remove = c.can_uninstall ? `<button data-act="uninstall" data-id="${esc(c.id)}" data-label="${esc(c.label)}" ${busy ? "disabled" : ""}>Remove</button>` : "";
   return `<div class="comp">
     <div><div class="name">${esc(c.label)}</div><div class="sub">${esc(c.note)}${extra ? ", " + esc(extra) : ""}</div></div>
     <div class="size">${esc(size)}</div>
@@ -568,7 +569,7 @@ function compRow(c) {
 
 async function componentAction(act, id, label) {
   if (act === "uninstall") {
-    if (!confirm(`Удалить «${label}»? Файлы будут удалены. Вернуть можно повторной установкой.`)) return;
+    if (!confirm(`Remove "${label}"? Its files will be deleted. You can install it again later.`)) return;
     const r = await api("/api/components/uninstall", { id });
     if (!r.ok) { alert(friendly(r.error)); return; }
     watchJob(r.job, label);
@@ -576,7 +577,7 @@ async function componentAction(act, id, label) {
     const r = await api("/api/components/install", { id });
     if (!r.ok) { alert(friendly(r.error)); return; }
     if (r.job) watchJob(r.job, label);
-    else { alert("Загрузка модели запущена. Прогресс показан в строке."); }
+    else { alert("The model download has started. Progress is shown in its row."); }
   }
   loadComponents();
 }
@@ -604,14 +605,14 @@ function watchJob(jobId, label) {
   tick();
 }
 
-// ---- общие настройки ----
+// ---- general settings ----
 let appSettings = null;
 async function loadSettings() {
   appSettings = await api("/api/settings");
   $("st-autostart").checked = !!appSettings.autostart;
   $("st-view").value = appSettings.start_view;
   $("st-dir").value = appSettings.download_dir || "";
-  $("st-dir-hint").textContent = `Сейчас модели лежат в: ${appSettings.hf_cache_root}`;
+  $("st-dir-hint").textContent = `Models are currently stored in: ${appSettings.hf_cache_root}`;
   $("st-token").value = appSettings.hf_token ? "••••" : "";
   $("st-swap").value = appSettings.swap_warn_gb;
 }
@@ -626,24 +627,24 @@ $("st-save").onclick = async () => {
   };
   const r = await api("/api/settings", body);
   if (!r.ok) { $("st-msg").textContent = r.error; return; }
-  $("st-msg").textContent = "Сохранено." + (body.autostart !== !!appSettings.autostart ? " Автозапуск изменится после перезапуска панели." : "");
+  $("st-msg").textContent = "Saved." + (body.autostart !== !!appSettings.autostart ? " The autostart change takes effect after the panel restarts." : "");
   await loadSettings();
   refresh();
 };
 
-// ---- папки с моделями ----
+// ---- model folders ----
 async function loadFolders() {
   const d = await api("/api/model-dirs");
   $("folder-list").innerHTML = d.dirs.length
-    ? d.dirs.map((p) => `<div class="comp" style="grid-template-columns:minmax(0,1fr) auto"><div class="name" style="font-size:15px;word-break:break-all">${esc(p)}</div><div class="btns"><button data-rm="${esc(p)}" class="small">Убрать</button></div></div>`).join("")
-    : '<p class="hint">Папок пока нет.</p>';
+    ? d.dirs.map((p) => `<div class="comp" style="grid-template-columns:minmax(0,1fr) auto"><div class="name" style="font-size:15px;word-break:break-all">${esc(p)}</div><div class="btns"><button data-rm="${esc(p)}" class="small">Remove</button></div></div>`).join("")
+    : '<p class="hint">No folders yet.</p>';
   $("folder-found").innerHTML = d.found.length
-    ? d.found.map((m) => `<div class="comp" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="name">${esc(m.label)}</div><div class="sub">${esc(m.path)}</div></div><div><span class="badge on">готова</span></div></div>`).join("")
-    : '<p class="hint">Ничего не найдено. Проверьте, что в папке есть модель (папка с config.json и файлами .safetensors, или файлы .gguf).</p>';
+    ? d.found.map((m) => `<div class="comp" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="name">${esc(m.label)}</div><div class="sub">${esc(m.path)}</div></div><div><span class="badge on">ready</span></div></div>`).join("")
+    : '<p class="hint">Nothing found. Make sure the folder contains a model (a folder with config.json and .safetensors files, or .gguf files).</p>';
   document.querySelectorAll("#folder-list button[data-rm]").forEach((b) => {
     b.onclick = async () => {
       const r = await api("/api/model-dirs/remove", { path: b.dataset.rm });
-      $("folder-msg").textContent = "Папка убрана из списка. Найдено моделей: " + r.found + ".";
+      $("folder-msg").textContent = "Folder removed from the list. Models found: " + r.found + ".";
       catalog = await api("/api/catalog");
       rebuildSimpleModels();
       loadFolders(); loadComponents(); refresh();
@@ -653,17 +654,17 @@ async function loadFolders() {
 
 $("folder-add").onclick = async () => {
   const path = $("folder-path").value.trim();
-  if (!path) { $("folder-msg").textContent = "Вставьте путь к папке."; return; }
+  if (!path) { $("folder-msg").textContent = "Paste the path to the folder."; return; }
   const r = await api("/api/model-dirs/add", { path });
   if (!r.ok) { $("folder-msg").textContent = r.error; return; }
-  $("folder-msg").textContent = r.found ? `Нашли моделей: ${r.found}.` : "Папка добавлена, но модели в ней не найдены.";
+  $("folder-msg").textContent = r.found ? `Models found: ${r.found}.` : "Folder added, but it contains no models.";
   $("folder-path").value = "";
   catalog = await api("/api/catalog");
   rebuildSimpleModels();
   loadFolders(); loadComponents(); refresh();
 };
 
-// ---- вкладки ----
+// ---- tabs ----
 function route() {
   const h = location.hash || ("#" + ((appSettings && appSettings.start_view) || "simple"));
   const view = { "#panel": "panel", "#components": "components" }[h] || "simple";
@@ -677,7 +678,7 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
-// ---- тема: светлая, тёмная или как в системе ----
+// ---- theme: light, dark or follow the system ----
 function applyTheme(t) {
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { localStorage.setItem("theme", t || ""); } catch (e) {}
@@ -688,7 +689,7 @@ $("theme").onclick = () => {
 };
 try { applyTheme(localStorage.getItem("theme") || ""); } catch (e) {}
 
-// ---- старт ----
+// ---- start ----
 loadSettings().then(() => route());
 refresh();
 loadComponents();
