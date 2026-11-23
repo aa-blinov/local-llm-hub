@@ -696,6 +696,6 @@ loadComponents();
 refreshLog();
 refreshHistory();
 setInterval(refresh, 4000);
-setInterval(loadComponents, 6000);
+setInterval(() => { if (!$("view-components").hidden) loadComponents(); }, 6000);
 setInterval(refreshLog, 4000);
 setInterval(refreshHistory, 8000);

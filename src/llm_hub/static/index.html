@@ -89,7 +89,8 @@
     .logpanel pre { flex: 1; min-height: 0; }
     .histpanel { grid-column: 3; }
     .histpanel h2 { position: sticky; top: calc(-1 * var(--s-4)); margin-top: calc(-1 * var(--s-4)); padding: var(--s-4) 0 var(--s-3); background: var(--panel); z-index: 1; }
-    #view-components { height: 100%; overflow: auto; display: grid; grid-template-rows: auto auto; align-content: start; gap: var(--s-4); }
+    #view-components { height: 100%; overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
+    #view-components > * { flex: none; }
     #view-components > .panel { overflow: visible; }
 
     .rows .row { min-height: 2.4em; display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); padding: var(--s-2) 0; border-bottom: 1px solid var(--hair); font-size: 15px; }
