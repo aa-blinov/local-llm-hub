@@ -11,3 +11,4 @@ config/user_models.json
 config/*.tmp
 .impeccable/hook.cache.json
 .playwright-mcp/
+.impeccable/critique/
