@@ -123,7 +123,7 @@
     .hist-row .t { color: var(--muted); font-variant-numeric: tabular-nums; }
 
     label { display: block; font-size: 14px; color: var(--muted); margin: var(--s-3) 0 var(--s-1); }
-    select, input[type=number], textarea { width: 100%; min-height: 44px; background: var(--ground); color: var(--ink);
+    select, input[type=number], input[type=text], input[type=password], textarea { width: 100%; min-height: 44px; background: var(--ground); color: var(--ink);
       border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-2) var(--s-4); font-family: inherit; font-size: 16px; line-height: 1.4; }
     textarea { min-height: 96px; resize: vertical; }
     ::placeholder { color: var(--muted); opacity: 1; }  /* 4.5:1 or better in both themes */
@@ -220,7 +220,7 @@
         <div class="ld-top"><span class="ld-label"></span><span class="ld-pct"></span></div>
         <div class="ld-track"><div class="ld-fill"></div></div>
       </div>
-      <p class="intro">Complete the steps in order. A green step is done. There is nothing to configure.</p>
+      <p class="intro">Complete the steps in order. A green step is done.</p>
       </div>
 
       <div class="step" id="st-engine">
@@ -386,12 +386,12 @@
         <option value="components">Programs and models</option>
       </select>
       <label for="st-dir">Folder for downloaded models</label>
-      <input id="st-dir" type="text" placeholder="Empty — default folder" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+      <input id="st-dir" type="text" placeholder="Empty — default folder">
       <p class="hint" id="st-dir-hint"></p>
       <label for="st-token">Hugging Face token (only needed for gated models)</label>
-      <input id="st-token" type="password" placeholder="Leave empty if you do not need it" autocomplete="off" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+      <input id="st-token" type="password" placeholder="Leave empty if you do not need it" autocomplete="off">
       <label for="st-swap">Warn when swap usage exceeds, GB</label>
-      <input id="st-swap" type="number" min="1" max="64" step="1" style="width:100%;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+      <input id="st-swap" type="number" min="1" max="64" step="1">
       <div class="row-actions"><button id="st-save" class="small">Save settings</button></div>
       <p class="hint" id="st-msg"></p>
     </section>
@@ -407,7 +407,7 @@
       <h2 class="sub">Add a model from Hugging Face</h2>
       <p class="hint">Paste a repository name, for example mlx-community/Qwen3.6-27B-4bit. The app checks it first. Nothing is downloaded until you press Install.</p>
       <div class="row-actions" style="margin-top:var(--s-3)">
-        <input id="hf-repo" type="text" placeholder="owner/model-name" style="flex:1;min-width:0;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+        <input id="hf-repo" type="text" placeholder="owner/model-name" style="flex:1;min-width:0">
         <button id="hf-add" class="small">Add</button>
       </div>
       <p class="hint" id="hf-msg" style="min-height:2.6em"></p>
@@ -418,7 +418,7 @@
       <h2>Model folders</h2>
       <p class="hint">If models are already on your disk (an external drive, LM Studio, another folder), add that folder. The app finds them and does not download them again.</p>
       <div class="row-actions" style="margin-top:var(--s-3)">
-        <input id="folder-path" type="text" placeholder="For example: /Volumes/Models or ~/.lmstudio/models" style="flex:1;min-width:0;min-height:44px;padding:var(--s-2) var(--s-3);border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--ground);color:var(--ink);font-family:inherit;font-size:15px">
+        <input id="folder-path" type="text" placeholder="For example: /Volumes/Models or ~/.lmstudio/models" style="flex:1;min-width:0">
         <button id="folder-add" class="small">Add folder</button>
       </div>
       <p class="hint" id="folder-msg" style="min-height:2.6em"></p>

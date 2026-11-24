@@ -461,6 +461,8 @@ function renderSimple() {
     ? '<span class="good">Installed</span>'
     : (engJob ? "Installing, please wait a few minutes…" : "Not installed. Click “Install”.");
   setDis("s-engine-btn", !loaded || engineOk || engJob);
+  // Once the program is installed, the green "Installed" line is enough: no inert button stays on screen.
+  $("s-engine-btn").hidden = loaded && engineOk;
   setDis("s-model-btn", !loaded || modelOk || !!dl || !(info && info.can_download));
 
   // step 2
@@ -734,6 +736,8 @@ window.addEventListener("hashchange", route);
 function applyTheme(t) {
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { localStorage.setItem("theme", t || ""); } catch (e) {}
+  // The button shows the current choice: auto, dark or light.
+  $("theme").textContent = "Theme: " + (t || "auto");
 }
 $("theme").onclick = () => {
   const cur = document.documentElement.dataset.theme || "";
