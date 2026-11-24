@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .components import Components, Jobs
-from .config import load, load_user_models, save_model_dirs
+from .config import load, load_user_models, registry_stamp, reload_into, save_model_dirs
 from .usermodels import ModelAddError, add_user_model, remove_user_model
 from .recommend import memory_gib, recommend
 from .downloads import DownloadManager
@@ -71,6 +71,14 @@ class SettingsBody(BaseModel):
 def create_app() -> FastAPI:
     reg = load()
     sup = Supervisor(reg)
+    stamp = {"value": registry_stamp()}
+
+    def refresh_registry():
+        """Pick up edits to registry.json or user_models.json without restarting the panel."""
+        current = registry_stamp()
+        if current != stamp["value"]:
+            reload_into(reg)
+            stamp["value"] = current
     dl = DownloadManager()
     comps = Components(reg, sup, dl)
 
@@ -103,6 +111,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/recommend")
     def recommend_model(purpose: str = "code"):
+        refresh_registry()
         cands = []
         for key, m in reg.models.items():
             simple = m.simple or {}
@@ -113,6 +122,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/catalog")
     def catalog():
+        refresh_registry()
         return sup.catalog()
 
     @app.get("/api/status")
@@ -176,6 +186,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/components")
     def components_list():
+        refresh_registry()
         return comps.list()
 
     @app.post("/api/components/install")

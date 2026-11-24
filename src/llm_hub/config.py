@@ -131,6 +131,17 @@ def save_user_models(items: list[dict], path: Path = USER_MODELS_PATH) -> None:
     tmp.replace(path)
 
 
+def registry_stamp(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> tuple:
+    """Modification times of the registry files; a change means the registry should be reloaded."""
+    return tuple(Path(p).stat().st_mtime_ns if Path(p).exists() else 0 for p in (path, user_path))
+
+
+def reload_into(reg: "Registry", path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> None:
+    """Re-read the registry files into the existing Registry object, so every holder of it sees the change."""
+    fresh = load(path, user_path)
+    vars(reg).update(vars(fresh))
+
+
 def load(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> Registry:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     engines = {

@@ -49,6 +49,11 @@ def port_busy(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+# Sampling for the panel's own test chat. Ornith's model card recommends these for general tasks;
+# greedy decoding (temperature 0) made one reasoning model loop on a coding task in our tests.
+SAMPLING = {"temperature": 0.6, "top_p": 0.95, "top_k": 20}
+
+
 class Supervisor:
     def __init__(self, reg: Registry):
         self.reg = reg
@@ -208,7 +213,7 @@ class Supervisor:
             "model": adapter.chat_model_id(self.current, loaded),
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": min(int(max_tokens), 2048),
-            "temperature": 0.0,
+            **SAMPLING,
             "reasoning_effort": "none",
         }
         req = urllib.request.Request(f"http://127.0.0.1:{self.reg.port}/v1/chat/completions",
