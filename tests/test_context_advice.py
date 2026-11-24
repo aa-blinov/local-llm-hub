@@ -24,7 +24,12 @@ def test_48gb_mac_gets_the_largest_context(ornith_like):
 
 def test_32gb_mac_steps_down(ornith_like):
     out = preflight.recommend_context(ornith_like, CHOICES, total_gib=32, apc_gib=2.0)
-    assert out["ctx"] == 131072 and out["fits"]
+    assert out["ctx"] == 65536 and out["fits"]  # 128k needs more than the 24 GiB budget with a 2 GB cache
+
+
+def test_overhead_grows_with_context():
+    assert preflight.overhead_gib(8192) < preflight.overhead_gib(32768) < preflight.overhead_gib(65536)
+    assert round(preflight.overhead_gib(65536), 2) == 1.6
 
 
 def test_prefix_cache_counts_against_the_budget(ornith_like):

@@ -12,7 +12,15 @@ from .config import Model
 
 GIB = 2**30
 PAGE = 16384
-OVERHEAD_GIB = 1.5   # activation buffers and runtime allocations (empirical)
+# Activation buffers and runtime allocations, measured with MLX (prefill step 512):
+# peak memory above weights + KV cache was 0.7 GiB at 8k, 1.1 at 32k and 1.6 at 64k tokens.
+OVERHEAD_BASE_GIB = 0.6
+OVERHEAD_PER_64K_GIB = 1.0
+
+
+def overhead_gib(ctx: int) -> float:
+    """Runtime overhead for a context of `ctx` tokens; grows with the length of the context."""
+    return OVERHEAD_BASE_GIB + OVERHEAD_PER_64K_GIB * ctx / 65536
 FP16 = 2             # bytes per KV cache element (default)
 
 
@@ -91,7 +99,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
     options = []
     for ctx in sorted(choices, reverse=True):
         kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
-        need = weights / GIB + kv + OVERHEAD_GIB + apc_gib
+        need = weights / GIB + kv + overhead_gib(ctx) + apc_gib
         options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
     fitting = [o["ctx"] for o in options if o["fits"]]
     best = max(fitting) if fitting else min(choices)
@@ -112,7 +120,7 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
     result = {
         "weights_gib": round(weights / GIB, 2) if weights else None,
         "kv_gib": None,
-        "overhead_gib": OVERHEAD_GIB,
+        "overhead_gib": round(overhead_gib(ctx), 2),
         "total_gib": None,
         "available_gib": round(available, 2),
         "reclaim_gib": round(reclaim_gib, 2),
@@ -124,12 +132,12 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
         result["message"] = "model files not found"
         return result
     if kv_tok is None:
-        result["total_gib"] = round(weights / GIB + OVERHEAD_GIB, 2)
+        result["total_gib"] = round(weights / GIB + overhead_gib(ctx), 2)
         result["message"] = "KV cache not estimated (no config.json); estimate uses weights only"
         result["verdict"] = "ok" if result["total_gib"] < available * 0.8 else "risk"
         return result
     kv = kv_tok * ctx / GIB
-    total = weights / GIB + kv + OVERHEAD_GIB
+    total = weights / GIB + kv + overhead_gib(ctx)
     result.update({"kv_gib": round(kv, 2), "total_gib": round(total, 2)})
     if total > available:
         result["verdict"] = "risk"
