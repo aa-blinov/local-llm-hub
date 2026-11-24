@@ -44,7 +44,7 @@ let jobWatch = null;
 // Labels for the simple view. Keys come from config/registry.json.
 const SIMPLE_PRESETS = {
   chat: "Chat — for conversations and questions (quick start)",
-  coding: "Coding — for working with code (remembers more text)",
+  coding: "Coding — for code (remembers more text)",
 };
 
 // Turn backend errors into plain instructions. The original text stays in the log.
@@ -273,7 +273,11 @@ function render(s) {
   const runKey = s.running && catalog ? (Object.entries(catalog.presets).find(([, p]) => p.model === s.model && s.opts && p.ctx === s.opts.ctx) || [""])[0] : "";
   if (runKey !== lastSyncedRun) {
     lastSyncedRun = runKey;
-    if (runKey) $("preset").value = runKey;
+    if (runKey) {
+      $("preset").value = runKey;
+      // Step 3 shows the same mode as the header, so a beginner never sees "Chat" while Coding runs.
+      if (SIMPLE_PRESETS[runKey]) $("s-preset").value = runKey;
+    }
   }
   setCls("dot", "dot " + (s.ready ? "ok-bg" : s.running ? "wait-bg" : "off-bg"));
   $("state").textContent = s.ready ? "assistant ready" : s.running ? "loading…" : "stopped";
