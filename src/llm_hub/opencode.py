@@ -61,6 +61,8 @@ def sync_config(reg: Registry, sup) -> dict:
         models[mid] = {
             "name": m.label,
             "limit": {"context": int(ctx), "output": 8192},
+            # Recommended sampling for general and coding tasks (model cards); greedy decoding loops on some models.
+            "options": {"temperature": 0.6, "top_p": 0.95, "top_k": 20},
         }
     block = {
         "npm": "@ai-sdk/openai-compatible",

@@ -214,6 +214,8 @@ class Supervisor:
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": min(int(max_tokens), 2048),
             **SAMPLING,
+            # Deliberate: the panel's test chat is a quick check, so the model's reasoning is switched off.
+            # Benchmarks ran with the default (reasoning on), so this check is faster but not identical.
             "reasoning_effort": "none",
         }
         req = urllib.request.Request(f"http://127.0.0.1:{self.reg.port}/v1/chat/completions",
