@@ -1,8 +1,7 @@
 name: release
 
-# Tag-triggered release. A tag of v* produces a release with the artefacts
-# the project ships, and the changelog section for that version becomes the
-# release body.
+# Tag-triggered release. A tag of v* builds the Python distribution and
+# publishes it with the changelog section for that version as the body.
 
 on:
   push:
@@ -25,20 +24,24 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Extract the version
+      - name: Extract the version and its changelog section
         id: version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building $VERSION"
+          awk -v v="$VERSION" '
+            /^## \[/ { if (found) exit; if (index($0, "[" v "]")) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          test -s "$RUNNER_TEMP/notes.md" || { echo "No changelog section for $VERSION"; exit 1; }
 
       - name: Build
-        # Replace with the real build. The rule is that the artefact that
-        # ships is produced by the same command the README documents.
-        run: echo "Replace with the build command for this stack."
+        run: |
+          python3 -m pip install --upgrade build
+          python3 -m build
 
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
-          body_path: CHANGELOG.md
+          files: dist/*
+          body_path: ${{ runner.temp }}/notes.md
