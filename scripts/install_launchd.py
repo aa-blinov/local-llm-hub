@@ -61,7 +61,12 @@ def install():
     if r.returncode != 0:
         print("launchctl bootstrap:", r.stderr.strip() or r.stdout.strip())
         sys.exit(1)
-    print(f"Installed: {PLIST}\nPanel: http://127.0.0.1:8765")
+    import json
+    try:
+        port = json.loads((ROOT / "config" / "registry.json").read_text(encoding="utf-8")).get("ui_port", 8765)
+    except (OSError, ValueError):
+        port = 8765
+    print(f"Installed: {PLIST}\nPanel: http://127.0.0.1:{port}")
 
 
 if __name__ == "__main__":
