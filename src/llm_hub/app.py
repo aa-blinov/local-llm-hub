@@ -83,12 +83,34 @@ def create_app() -> FastAPI:
     dl = DownloadManager()
     comps = Components(reg, sup, dl)
 
+    def check_launch(key: str, opts: dict) -> tuple[dict, str | None]:
+        """Apply the Mac's memory limit to the options the engine will really start with (registry defaults included)."""
+        effective = {**reg.default, **opts}
+        m = reg.models.get(key)
+        total = memory_gib()
+        if m is None or total is None or m.engine != "mlx" or not effective.get("ctx"):
+            return opts, None
+        apc_cap = 6.0 if total >= 48 else 2.0  # same cap the advice uses
+        apc_gib = min(float(effective.get("apc_mem_gb", apc_cap)), apc_cap) if effective.get("apc", True) else 0.0
+        ctx = int(effective["ctx"])
+        need = context_need_gib(m, ctx, apc_gib)
+        if need is None or need <= total * BUDGET_SHARE:
+            return opts, None
+        advice = recommend_context(m, reg.engines[m.engine].ctx_choices, total, apc_gib=apc_gib)
+        if advice["fits"] and advice["ctx"] < ctx:
+            out = {**opts, "ctx": advice["ctx"]}
+            return out, (f"Context {ctx // 1024}k does not fit this Mac; "
+                         f"started with {advice['ctx'] // 1024}k instead.")
+        return opts, (f"Even the smallest context ({min(reg.engines[m.engine].ctx_choices) // 1024}k) "
+                      f"is above the comfortable memory limit of this Mac. Expect swap or a failed start.")
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if reg.autostart:
             d = reg.default
             if d.get("model") in reg.models:
-                sup.start(d["model"], {})
+                opts, _note = check_launch(d["model"], {})
+                sup.start(d["model"], opts)
         yield
         sup.stop()
 
@@ -150,18 +172,7 @@ def create_app() -> FastAPI:
         key = key or reg.default.get("model")
         opts.update({k: v for k, v in body.model_dump().items()
                      if k not in ("model", "preset") and v is not None})
-        note = None
-        m = reg.models.get(key)
-        total = memory_gib() if m is not None and opts.get("ctx") else None
-        if total and m is not None and m.engine == "mlx":
-            apc_gib = float(opts.get("apc_mem_gb", 6)) if opts.get("apc", True) else 0.0
-            need = context_need_gib(m, int(opts["ctx"]), apc_gib)
-            if need is not None and need > total * BUDGET_SHARE:
-                advice = recommend_context(m, reg.engines[m.engine].ctx_choices, total, apc_gib=apc_gib)
-                if advice["fits"] and advice["ctx"] < int(opts["ctx"]):
-                    note = (f"Context {int(opts['ctx']) // 1024}k does not fit this Mac; "
-                            f"started with {advice['ctx'] // 1024}k instead.")
-                    opts["ctx"] = advice["ctx"]
+        opts, note = check_launch(key, opts)
         result = sup.start(key, opts)
         if note and isinstance(result, dict):
             result["note"] = note
