@@ -12,7 +12,7 @@ A web panel for running language models on a Mac with Apple Silicon. Pick a mode
 
 **Requirements**
 
-- A Mac with Apple Silicon (M1 or newer). Verified on macOS 26 with 48 GB of memory.
+- A Mac with Apple Silicon (M1 or newer). Verified on macOS 27.2 with 48 GB of memory.
 - About 20 GB of free disk space for one model.
 - Xcode Command Line Tools (the installer offers to install them).
 
@@ -40,7 +40,7 @@ The installer creates the environment, installs the packages, builds llama.cpp w
 - **opencode integration.** A button writes a `local-hub` provider into the opencode configuration. Other providers are left untouched, and a backup is created first.
 - **Settings.** Autostart at login, start view, download folder, token, swap warning threshold.
 
-The app writes to disk only inside the project folder and to the standard Hugging Face and opencode locations. Settings that contain a token are stored in `config/settings.json` with owner-only permissions, and they are excluded from git.
+The app writes to disk only inside the project folder and to a few standard locations: the Hugging Face cache, the opencode configuration (`~/.config/opencode/`) and, if autostart is on, a launch agent in `~/Library/LaunchAgents/`. Settings that contain a token are stored in `config/settings.json` with owner-only permissions, and they are excluded from git.
 
 ## Development
 
@@ -66,6 +66,7 @@ The architecture is described in [`docs/architecture.md`](docs/architecture.md).
 - The memory estimate is approximate. Hybrid models are estimated from their full-attention layers; the GGUF KV cache is not estimated.
 - A loaded model is not unloaded automatically when another one starts: stop the current one first.
 - The setup has been tested on one machine. A clean installation on another Mac has not been verified yet.
+- Starting `install.command` by double-click in Finder has not been tested; use the terminal command above if it does not open.
 
 ## Security
 
