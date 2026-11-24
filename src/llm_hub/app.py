@@ -19,7 +19,7 @@ def _home_short(p) -> str:
     s, home = str(p), str(Path.home())
     return "~" + s[len(home):] if s.startswith(home) else s
 from .opencode import sync_config, status_config
-from .preflight import recommend_context, estimate
+from .preflight import BUDGET_SHARE, context_need_gib, estimate, recommend_context
 from .supervisor import Supervisor, history_tail
 
 STATIC = Path(__file__).parent / "static"
@@ -150,7 +150,22 @@ def create_app() -> FastAPI:
         key = key or reg.default.get("model")
         opts.update({k: v for k, v in body.model_dump().items()
                      if k not in ("model", "preset") and v is not None})
-        return sup.start(key, opts)
+        note = None
+        m = reg.models.get(key)
+        total = memory_gib() if m is not None and opts.get("ctx") else None
+        if total and m is not None and m.engine == "mlx":
+            apc_gib = float(opts.get("apc_mem_gb", 6)) if opts.get("apc", True) else 0.0
+            need = context_need_gib(m, int(opts["ctx"]), apc_gib)
+            if need is not None and need > total * BUDGET_SHARE:
+                advice = recommend_context(m, reg.engines[m.engine].ctx_choices, total, apc_gib=apc_gib)
+                if advice["fits"] and advice["ctx"] < int(opts["ctx"]):
+                    note = (f"Context {int(opts['ctx']) // 1024}k does not fit this Mac; "
+                            f"started with {advice['ctx'] // 1024}k instead.")
+                    opts["ctx"] = advice["ctx"]
+        result = sup.start(key, opts)
+        if note and isinstance(result, dict):
+            result["note"] = note
+        return result
 
     @app.post("/api/stop")
     def stop():

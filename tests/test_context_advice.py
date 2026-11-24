@@ -29,7 +29,7 @@ def test_32gb_mac_steps_down(ornith_like):
 
 def test_overhead_grows_with_context():
     assert preflight.overhead_gib(8192) < preflight.overhead_gib(32768) < preflight.overhead_gib(65536)
-    assert round(preflight.overhead_gib(65536), 2) == 1.6
+    assert round(preflight.overhead_gib(65536), 2) == 1.75
 
 
 def test_prefix_cache_counts_against_the_budget(ornith_like):
@@ -55,22 +55,29 @@ def test_missing_weights_asks_to_download(monkeypatch):
     assert out["ok"] is False and "Download" in out["message"]
 
 
-MEASURED = {"overhead_gib": {"8192": 0.72, "32768": 1.11, "65536": 1.63, "131072": 1.71}}
+MEASURED = {"overhead_gib": {"8192": 0.72, "32768": 1.11, "65536": 1.63, "131072": 2.76, "262144": 5.07}}
 
 
 def test_measured_points_are_used_and_interpolated():
     m = SimpleNamespace(memory=MEASURED)
     assert preflight.overhead_for(m, 8192) == 0.72
-    assert preflight.overhead_for(m, 131072) == 1.71
+    assert preflight.overhead_for(m, 131072) == 2.76
     mid = preflight.overhead_for(m, 49152)  # between 32k and 64k
     assert 1.11 < mid < 1.63
 
 
 def test_beyond_measured_range_is_conservative():
     m = SimpleNamespace(memory=MEASURED)
-    assert preflight.overhead_for(m, 262144) >= 1.71 + 1.0
+    assert preflight.overhead_for(m, 262144) == 5.07
+    assert preflight.overhead_for(m, 327680) >= 5.07 + 1.15
 
 
 def test_model_without_measurements_uses_generic_rule():
     m = SimpleNamespace(memory=None)
     assert preflight.overhead_for(m, 65536) == preflight.overhead_gib(65536)
+
+
+def test_context_need_matches_the_advice_table(ornith_like):
+    out = preflight.recommend_context(ornith_like, CHOICES, total_gib=48, apc_gib=6.0)
+    for option in out["options"]:
+        assert round(preflight.context_need_gib(ornith_like, option["ctx"], 6.0), 1) == option["need_gib"]

@@ -68,12 +68,13 @@
         }
       },
       "memory": {
-        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "measured": "MLX peak, prefill 512, minus weights and KV; 128k/256k from a 289k-token prompt",
         "overhead_gib": {
           "8192": 0.72,
           "32768": 1.11,
           "65536": 1.63,
-          "131072": 1.71
+          "131072": 2.76,
+          "262144": 5.07
         }
       }
     },
@@ -105,12 +106,13 @@
         }
       },
       "memory": {
-        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "measured": "MLX peak, prefill 512, minus weights and KV; 128k/256k from a 289k-token prompt",
         "overhead_gib": {
           "8192": 0.72,
           "32768": 1.11,
           "65536": 1.63,
-          "131072": 1.71
+          "131072": 2.76,
+          "262144": 5.07
         }
       }
     },
@@ -143,12 +145,13 @@
         }
       },
       "memory": {
-        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "measured": "MLX peak, prefill 512, minus weights and KV; 128k/256k from a 289k-token prompt",
         "overhead_gib": {
           "8192": 0.87,
           "32768": 1.25,
           "65536": 1.78,
-          "131072": 1.82
+          "131072": 2.86,
+          "262144": 5.17
         }
       }
     },
@@ -181,12 +184,13 @@
         }
       },
       "memory": {
-        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "measured": "MLX peak, prefill 512, minus weights and KV; 128k/256k from a 289k-token prompt",
         "overhead_gib": {
           "8192": 0.72,
           "32768": 1.11,
           "65536": 1.63,
-          "131072": 1.71
+          "131072": 2.76,
+          "262144": 5.07
         }
       }
     }

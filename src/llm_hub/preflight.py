@@ -12,10 +12,11 @@ from .config import Model
 
 GIB = 2**30
 PAGE = 16384
-# Activation buffers and runtime allocations, measured with MLX (prefill step 512):
-# peak memory above weights + KV cache was 0.7 GiB at 8k, 1.1 at 32k and 1.6 at 64k tokens.
+# Activation buffers and runtime allocations, measured with MLX (prefill step 512), above weights and KV cache:
+# about 0.7 GiB at 8k, 1.1 at 32k, 1.6 at 64k, 2.8 at 128k and 5.1 at 256k tokens.
+# The generic rule is a line through those points with a small safety margin.
 OVERHEAD_BASE_GIB = 0.6
-OVERHEAD_PER_64K_GIB = 1.0
+OVERHEAD_PER_64K_GIB = 1.15
 
 
 def overhead_gib(ctx: int) -> float:
@@ -103,6 +104,16 @@ def overhead_for(model, ctx: int) -> float:
     return overhead_gib(ctx)
 
 
+def context_need_gib(model: Model, ctx: int, apc_gib: float = 0.0) -> float | None:
+    """Memory needed to run `model` at `ctx` tokens: weights + KV cache + overhead + prefix cache."""
+    weights = _weights_bytes(model)
+    if weights is None:
+        return None
+    kv_tok = _kv_bytes_per_token(model)
+    kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
+    return weights / GIB + kv + overhead_for(model, ctx) + apc_gib
+
+
 def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE,
                       apc_gib: float = 0.0) -> dict:
     """Largest context from `choices` whose weights + KV cache + overhead + prefix cache fit in `share` of total memory.
@@ -118,8 +129,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
     budget = total_gib * share
     options = []
     for ctx in sorted(choices, reverse=True):
-        kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
-        need = weights / GIB + kv + overhead_for(model, ctx) + apc_gib
+        need = context_need_gib(model, ctx, apc_gib)
         options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
     fitting = [o["ctx"] for o in options if o["fits"]]
     best = max(fitting) if fitting else min(choices)
