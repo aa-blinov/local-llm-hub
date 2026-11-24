@@ -164,8 +164,9 @@ def create_app() -> FastAPI:
         if total is None:
             return {"ok": False, "message": "Memory of this Mac could not be read."}
         choices = reg.engines[m.engine].ctx_choices
-        advice = recommend_context(m, choices, total)
-        advice["apc_mem_gb"] = 6 if total >= 32 else 3
+        apc_gib = 6.0 if total >= 48 else 2.0  # prefix-cache memory counts against the same budget
+        advice = recommend_context(m, choices, total, apc_gib=apc_gib)
+        advice["apc_mem_gb"] = apc_gib
         advice["prefill"] = 512
         return advice
 

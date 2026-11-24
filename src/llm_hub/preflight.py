@@ -75,8 +75,9 @@ def _kv_bytes_per_token(model: Model) -> int | None:
 BUDGET_SHARE = 0.75  # plan to use at most this share of the Mac's total memory
 
 
-def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE) -> dict:
-    """Largest context from `choices` whose weights + KV cache + overhead fit in `share` of total memory.
+def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE,
+                      apc_gib: float = 0.0) -> dict:
+    """Largest context from `choices` whose weights + KV cache + overhead + prefix cache fit in `share` of total memory.
 
     Uses total memory, not the currently free memory, so the advice is about the hardware, not the moment.
     """
@@ -90,7 +91,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
     options = []
     for ctx in sorted(choices, reverse=True):
         kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
-        need = weights / GIB + kv + OVERHEAD_GIB
+        need = weights / GIB + kv + OVERHEAD_GIB + apc_gib
         options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
     fitting = [o["ctx"] for o in options if o["fits"]]
     best = max(fitting) if fitting else min(choices)

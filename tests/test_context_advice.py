@@ -23,8 +23,14 @@ def test_48gb_mac_gets_the_largest_context(ornith_like):
 
 
 def test_32gb_mac_steps_down(ornith_like):
-    out = preflight.recommend_context(ornith_like, CHOICES, total_gib=32)
+    out = preflight.recommend_context(ornith_like, CHOICES, total_gib=32, apc_gib=2.0)
     assert out["ctx"] == 131072 and out["fits"]
+
+
+def test_prefix_cache_counts_against_the_budget(ornith_like):
+    # With a 6 GB prefix cache a 32 GB Mac no longer fits 128k, so the advice must step down.
+    out = preflight.recommend_context(ornith_like, CHOICES, total_gib=32, apc_gib=6.0)
+    assert out["fits"] is False  # nothing fits with a 6 GB cache on 32 GB: 128k is no longer offered
 
 
 def test_too_small_mac_reports_it(ornith_like):
