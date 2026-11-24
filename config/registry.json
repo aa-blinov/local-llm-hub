@@ -72,21 +72,6 @@
         "speed": "Not measured on an M4 Pro yet. Tool calls: 100% valid in community tests (M4 Max); the plain 4-bit build failed 17% of calls."
       }
     },
-    "ornith-9b-4bit": {
-      "label": "Ornith 1.5 9B, 4-bit (MLX)",
-      "engine": "mlx",
-      "repo": "ornith-ai/Ornith-1.5-9B-MLX-4bit",
-      "notes": "4.7 GiB. Small and fast, for quick checks and simple questions.",
-      "simple": {
-        "size": "≈5 GiB",
-        "size_gib": 4.7,
-        "about": "Small model for quick checks.",
-        "rank": {
-          "quick": 2
-        },
-        "speed": "Not measured on this Mac yet."
-      }
-    },
     "gpt-oss-20b-mxfp4-q8": {
       "label": "GPT-OSS 20B, MXFP4 (MLX)",
       "engine": "mlx",
@@ -95,26 +80,28 @@
       "simple": {
         "size": "≈11 GiB",
         "size_gib": 11.3,
-        "about": "Open model from OpenAI. Fast for chat; tool use not tested here.",
+        "about": "Open MoE model from OpenAI. Fast for chat; tool use not tested here.",
         "rank": {
+          "quick": 1,
           "chat": 3
         },
         "speed": "Community measurement on an M4 Pro 48 GB: about 73 tokens per second. Not measured on this Mac yet."
       }
     },
-    "qwen35-9b-4bit": {
-      "label": "Qwen 3.5 9B, 4-bit (MLX)",
+    "qwen3-30b-a3b-2507-4bit": {
+      "label": "Qwen 3 30B-A3B Instruct, 4-bit (MLX)",
       "engine": "mlx",
-      "repo": "mlx-community/Qwen3.5-9B-4bit",
-      "notes": "Small model, about 6 GiB.",
+      "repo": "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit",
+      "notes": "Mixture of experts, 128 experts, about 16 GiB.",
       "simple": {
-        "size": "≈6 GiB",
-        "size_gib": 5.6,
-        "about": "Small and quick. For simple questions.",
+        "size": "≈16 GiB",
+        "size_gib": 16.0,
+        "about": "Mixture-of-experts model for everyday questions and chat.",
         "rank": {
-          "quick": 1
+          "quick": 2,
+          "chat": 5
         },
-        "speed": "Community measurement on an M4 Pro 48 GB: about 50 tokens per second. Not measured on this Mac yet."
+        "speed": "Not measured on this Mac yet."
       }
     }
   },
