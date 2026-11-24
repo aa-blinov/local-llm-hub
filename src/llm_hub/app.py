@@ -12,17 +12,17 @@ from .config import load, load_user_models, registry_stamp, reload_into, save_mo
 from .usermodels import ModelAddError, add_user_model, remove_user_model
 from .recommend import memory_gib, recommend
 from .downloads import DownloadManager
+from .opencode import sync_config, status_config
+from .preflight import BUDGET_SHARE, context_need_gib, estimate, recommend_context
+from .supervisor import Supervisor, history_tail
+
+STATIC = Path(__file__).parent / "static"
 
 
 def _home_short(p) -> str:
     """Show paths under the home folder as ~/..., so the interface does not expose the user name."""
     s, home = str(p), str(Path.home())
     return "~" + s[len(home):] if s.startswith(home) else s
-from .opencode import sync_config, status_config
-from .preflight import BUDGET_SHARE, context_need_gib, estimate, recommend_context
-from .supervisor import Supervisor, history_tail
-
-STATIC = Path(__file__).parent / "static"
 
 
 class StartBody(BaseModel):
