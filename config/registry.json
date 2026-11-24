@@ -66,6 +66,15 @@
             "top_k": 20
           }
         }
+      },
+      "memory": {
+        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "overhead_gib": {
+          "8192": 0.72,
+          "32768": 1.11,
+          "65536": 1.63,
+          "131072": 1.71
+        }
       }
     },
     "qwen36-35b-a3b-4bit": {
@@ -93,6 +102,15 @@
             "top_k": 20,
             "presence_penalty": 0.0
           }
+        }
+      },
+      "memory": {
+        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "overhead_gib": {
+          "8192": 0.72,
+          "32768": 1.11,
+          "65536": 1.63,
+          "131072": 1.71
         }
       }
     },
@@ -123,6 +141,15 @@
             "presence_penalty": 0.0
           }
         }
+      },
+      "memory": {
+        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "overhead_gib": {
+          "8192": 0.87,
+          "32768": 1.25,
+          "65536": 1.78,
+          "131072": 1.82
+        }
       }
     },
     "kat-coder-v2-optiq4": {
@@ -151,6 +178,15 @@
             "top_k": 20,
             "presence_penalty": 1.5
           }
+        }
+      },
+      "memory": {
+        "measured": "MLX peak, prefill 512, minus weights and KV",
+        "overhead_gib": {
+          "8192": 0.72,
+          "32768": 1.11,
+          "65536": 1.63,
+          "131072": 1.71
         }
       }
     }

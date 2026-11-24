@@ -83,6 +83,26 @@ def _kv_bytes_per_token(model: Model) -> int | None:
 BUDGET_SHARE = 0.75  # plan to use at most this share of the Mac's total memory
 
 
+def overhead_for(model, ctx: int) -> float:
+    """Overhead for this model and context: interpolated from its measured points when it has them.
+
+    Beyond the measured range the generic rule is used, which is the conservative side.
+    """
+    mem = getattr(model, "memory", None) or {}
+    pts = mem.get("overhead_gib") or {}
+    if not pts:
+        return overhead_gib(ctx)
+    xs = sorted((int(k), float(v)) for k, v in pts.items())
+    if ctx <= xs[0][0]:
+        return xs[0][1]
+    if ctx >= xs[-1][0]:
+        return xs[-1][1] + OVERHEAD_PER_64K_GIB * (ctx - xs[-1][0]) / 65536
+    for (x0, y0), (x1, y1) in zip(xs, xs[1:]):
+        if x0 <= ctx <= x1:
+            return y0 + (y1 - y0) * (ctx - x0) / (x1 - x0)
+    return overhead_gib(ctx)
+
+
 def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE,
                       apc_gib: float = 0.0) -> dict:
     """Largest context from `choices` whose weights + KV cache + overhead + prefix cache fit in `share` of total memory.
@@ -99,7 +119,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
     options = []
     for ctx in sorted(choices, reverse=True):
         kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
-        need = weights / GIB + kv + overhead_gib(ctx) + apc_gib
+        need = weights / GIB + kv + overhead_for(model, ctx) + apc_gib
         options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
     fitting = [o["ctx"] for o in options if o["fits"]]
     best = max(fitting) if fitting else min(choices)
@@ -120,7 +140,7 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
     result = {
         "weights_gib": round(weights / GIB, 2) if weights else None,
         "kv_gib": None,
-        "overhead_gib": round(overhead_gib(ctx), 2),
+        "overhead_gib": round(overhead_for(model, ctx), 2),
         "total_gib": None,
         "available_gib": round(available, 2),
         "reclaim_gib": round(reclaim_gib, 2),
@@ -132,12 +152,12 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
         result["message"] = "model files not found"
         return result
     if kv_tok is None:
-        result["total_gib"] = round(weights / GIB + overhead_gib(ctx), 2)
+        result["total_gib"] = round(weights / GIB + overhead_for(model, ctx), 2)
         result["message"] = "KV cache not estimated (no config.json); estimate uses weights only"
         result["verdict"] = "ok" if result["total_gib"] < available * 0.8 else "risk"
         return result
     kv = kv_tok * ctx / GIB
-    total = weights / GIB + kv + overhead_gib(ctx)
+    total = weights / GIB + kv + overhead_for(model, ctx)
     result.update({"kv_gib": round(kv, 2), "total_gib": round(total, 2)})
     if total > available:
         result["verdict"] = "risk"

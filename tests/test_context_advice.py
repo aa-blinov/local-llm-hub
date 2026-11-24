@@ -53,3 +53,24 @@ def test_missing_weights_asks_to_download(monkeypatch):
     monkeypatch.setattr(preflight, "_weights_bytes", lambda m: None)
     out = preflight.recommend_context(SimpleNamespace(), CHOICES, total_gib=48)
     assert out["ok"] is False and "Download" in out["message"]
+
+
+MEASURED = {"overhead_gib": {"8192": 0.72, "32768": 1.11, "65536": 1.63, "131072": 1.71}}
+
+
+def test_measured_points_are_used_and_interpolated():
+    m = SimpleNamespace(memory=MEASURED)
+    assert preflight.overhead_for(m, 8192) == 0.72
+    assert preflight.overhead_for(m, 131072) == 1.71
+    mid = preflight.overhead_for(m, 49152)  # between 32k and 64k
+    assert 1.11 < mid < 1.63
+
+
+def test_beyond_measured_range_is_conservative():
+    m = SimpleNamespace(memory=MEASURED)
+    assert preflight.overhead_for(m, 262144) >= 1.71 + 1.0
+
+
+def test_model_without_measurements_uses_generic_rule():
+    m = SimpleNamespace(memory=None)
+    assert preflight.overhead_for(m, 65536) == preflight.overhead_gib(65536)

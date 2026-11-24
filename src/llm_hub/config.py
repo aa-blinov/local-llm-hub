@@ -39,6 +39,7 @@ class Model:
     origin: str = "registry"   # registry | folder
     simple: dict | None = None  # optional block for the Simple view: size, about, recommended
     sampling: dict | None = None  # {'default': mode, 'modes': {mode: {temperature, top_p, top_k, presence_penalty}}}
+    memory: dict | None = None  # measured overhead per context length: {'overhead_gib': {ctx: GiB}}
 
     def resolve(self) -> Path | None:
         """Path to the model files: explicit path, folder scan result, or Hugging Face cache snapshot."""
@@ -170,7 +171,8 @@ def load(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> Regi
             raise ValueError(f"model {k}: unknown engine {v['engine']}")
         base[k] = Model(k, v["label"], v["engine"], v.get("repo"), _expand(v.get("path")),
                         _expand(v.get("mmproj")), v.get("notes", ""),
-                        simple=v.get("simple"), sampling=v.get("sampling"))
+                        simple=v.get("simple"), sampling=v.get("sampling"),
+                        memory=v.get("memory"))
     for item in load_user_models(user_path):
         if item.get("engine") in engines and item.get("key") and item.get("repo"):
             base[item["key"]] = Model(item["key"], item.get("label", item["key"]), item["engine"],
