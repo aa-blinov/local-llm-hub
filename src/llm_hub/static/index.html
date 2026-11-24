@@ -95,7 +95,9 @@
     .good { color: var(--ok); } .warn { color: var(--wait); } .bad { color: var(--off); }
 
     /* Advanced view */
-    #view-panel { display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: 460px auto auto; }
+    #view-panel { display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: auto auto auto; }
+    #launch, #state-panel { overflow: visible; }
+    #state-panel { align-self: start; }
     #settings-panel { grid-column: 1 / -1; }
     #view-panel > * { min-width: 0; }
     /* Diagnostics: answer check, program log and history, collapsed by default */

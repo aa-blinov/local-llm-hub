@@ -806,6 +806,8 @@ loadComponents();
 refreshLog();
 refreshHistory();
 setInterval(refresh, 4000);
-setInterval(() => { if (!$("view-components").hidden) loadComponents(); }, 6000);
+// Step 1 of the Simple view needs the component list too, so it is loaded on start and kept fresh on every view.
+loadComponents();
+setInterval(loadComponents, 6000);
 setInterval(refreshLog, 4000);
 setInterval(refreshHistory, 8000);
