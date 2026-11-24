@@ -248,7 +248,8 @@
             </select>
             <p class="muted" id="s-recommend" style="margin:var(--s-2) 0 0"></p>
             <div class="row-actions"><button id="s-recommend-btn" class="small">Use the recommended model</button></div>
-            <div class="row-actions"><button id="s-model-btn" class="primary">Download model</button></div>
+            <div class="row-actions"><button id="s-model-btn" class="primary">Download model</button>
+              <button id="s-model-cancel" class="small" hidden>Cancel download</button></div>
             <div id="s-model-text" class="msg"></div>
           </div>
         </div>
@@ -415,6 +416,7 @@
     </section>
     <section class="panel" id="job-panel" hidden>
       <h2>Operation log <span class="hint" id="job-title" style="margin-left:var(--s-3)"></span></h2>
+      <div class="row-actions"><button id="job-cancel" class="small" hidden>Cancel</button></div>
       <pre id="job-log" style="max-height:220px"></pre>
     </section>
   </section>

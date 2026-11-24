@@ -47,6 +47,7 @@ class Jobs:
         return {"ok": True, "job": job_id}
 
     def _run(self, job: dict, fn):
+        _CURRENT.job = job
         with open(job["log"], "w", encoding="utf-8") as f:
             def log(line: str):
                 f.write(line.rstrip() + "\n")
@@ -54,12 +55,33 @@ class Jobs:
 
             try:
                 fn(log)
-                job["state"] = "done"
-                log("== done")
+                if job["state"] != "cancelled":
+                    job["state"] = "done"
+                    log("== done")
             except Exception as e:
-                job["state"] = "error"
-                job["error"] = str(e)[:300]
-                log(f"== error: {e}")
+                if job["state"] == "cancelled":
+                    log("== cancelled")
+                else:
+                    job["state"] = "error"
+                    job["error"] = str(e)[:300]
+                    log(f"== error: {e}")
+            finally:
+                _CURRENT.job = None
+
+    def cancel(self, job_id: str) -> dict:
+        """Stop a running install or uninstall. Its log says it was cancelled."""
+        job = self._jobs.get(job_id)
+        if not job or job["state"] != "running":
+            return {"ok": False, "error": "no such running job"}
+        job["state"] = "cancelled"
+        proc = job.get("proc")
+        if proc is not None and proc.poll() is None:
+            import signal
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except OSError:
+                proc.terminate()
+        return {"ok": True}
 
     def latest(self, comp_id: str) -> dict | None:
         jobs = [j for j in self._jobs.values() if j["comp"] == comp_id]
@@ -76,13 +98,24 @@ class Jobs:
         return "\n".join(p.read_text(encoding="utf-8", errors="replace").splitlines()[-n:])
 
 
+_CURRENT = threading.local()  # the job whose thread is running right now, so a cancel can reach its process
+
+
 def _run(cmd: list[str], log, cwd: Path | None = None):
     log("$ " + " ".join(cmd))
-    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                            start_new_session=True)  # own process group, so cancel stops the whole build
+    job = getattr(_CURRENT, "job", None)
+    if job is not None:
+        job["proc"] = proc
     for line in proc.stdout:
         log(line)
     code = proc.wait()
+    if job is not None:
+        job.pop("proc", None)
     if code != 0:
+        if job is not None and job.get("state") == "cancelled":
+            raise RuntimeError("cancelled")
         raise RuntimeError(f"command exited with code {code}: {cmd[0]}")
 
 

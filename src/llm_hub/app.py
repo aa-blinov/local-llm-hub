@@ -213,6 +213,10 @@ def create_app() -> FastAPI:
     def download_status(key: str):
         return dl.status(model_or_404(key))
 
+    @app.post("/api/download/{key}/cancel")
+    def download_cancel(key: str):
+        return dl.cancel(model_or_404(key).key)
+
     @app.post("/api/cache/clear")
     def cache_clear():
         return sup.clear_cache()
@@ -244,6 +248,10 @@ def create_app() -> FastAPI:
         if not j:
             raise HTTPException(404, "no such job")
         return {"state": j["state"], "error": j["error"], "log": Jobs.tail(j)}
+
+    @app.post("/api/jobs/{job_id}/cancel")
+    def job_cancel(job_id: str):
+        return comps.jobs.cancel(job_id)
 
     @app.get("/api/model-dirs")
     def model_dirs_list():

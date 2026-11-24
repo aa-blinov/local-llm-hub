@@ -50,13 +50,13 @@ def friendly_download_error(e: Exception, repo: str) -> str:
     from .settings import hf_token
     text = str(e)
     name = type(e).__name__
-    if name == "GatedRepoError" or "401 Client Error" in text or "403 Client Error" in text:
+    if name == "GatedRepoError" or "GatedRepoError" in text or "401 Client Error" in text or "403 Client Error" in text:
         if hf_token():
             return ("The token was rejected or this account has no access to the model. Check the token "
                     "and accept the terms on the model page on huggingface.co.")
         return ("This model is gated. Open its page on huggingface.co and accept the terms, "
                 "then add your Hugging Face token under Settings.")
-    if name == "RepositoryNotFoundError":
+    if name == "RepositoryNotFoundError" or "RepositoryNotFoundError" in text:
         return f"Model {repo} was not found on Hugging Face. Check the repository name."
     return "The download was interrupted. Start it again: it resumes from where it stopped. " + text[:120]
 
@@ -80,15 +80,49 @@ class DownloadManager:
         return {"ok": True}
 
     def _run(self, key: str, repo: str, job: dict):
+        import subprocess
+        import sys
+        from .settings import hf_cache_root, hf_token
         try:
             job["total_bytes"] = repo_size_bytes(repo)
-            from huggingface_hub import snapshot_download
-            from .settings import hf_cache_root, hf_token
-            snapshot_download(repo, cache_dir=str(hf_cache_root()), token=hf_token())
-            job["state"] = "done"
+            env = dict(os.environ)
+            token = hf_token()
+            if token:
+                env["HF_TOKEN"] = token
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "llm_hub.download_worker", repo, str(hf_cache_root())],
+                env=env, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True,
+                start_new_session=True)  # own process group, so cancel can stop it and its children
+            job["proc"] = proc
+            _, err = proc.communicate()
+            if job["state"] == "cancelled":
+                return
+            if proc.returncode == 0:
+                job["state"] = "done"
+            else:
+                job["state"] = "error"
+                job["error"] = friendly_download_error(RuntimeError((err or "").strip()[-400:]), repo)
         except Exception as e:
             job["state"] = "error"
             job["error"] = friendly_download_error(e, repo)
+        finally:
+            job.pop("proc", None)
+
+    def cancel(self, key: str) -> dict:
+        """Stop a running download. Files already downloaded stay, so a later download resumes."""
+        with self._lock:
+            job = self._jobs.get(key)
+            if not job or job["state"] != "running":
+                return {"ok": False, "error": "no download is running for this model"}
+            job["state"] = "cancelled"
+            proc = job.get("proc")
+        if proc is not None and proc.poll() is None:
+            import signal
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except OSError:
+                proc.terminate()
+        return {"ok": True}
 
     def status(self, model: Model) -> dict:
         job = self._jobs.get(model.key)

@@ -380,6 +380,7 @@ async function startModelDownload(key) {
   const r = await api("/api/download", { model: key });
   if (!r.ok) { $("s-model-text").textContent = friendly(r.error); $("dlstate").textContent = friendly(r.error); return; }
   $("dlstate").textContent = "Downloading…";
+  $("s-model-cancel").hidden = false;
   pollDownload(key);
 }
 
@@ -388,7 +389,12 @@ function pollDownload(key) {
   dlTimer = setInterval(async () => {
     const d = await api(`/api/download/${encodeURIComponent(key)}`);
     const pct = d.percent == null ? "" : ` ${d.percent}%`;
-    if (d.state === "running") {
+    $("s-model-cancel").hidden = d.state !== "running";
+    if (d.state === "cancelled") {
+      clearInterval(dlTimer);
+      $("s-model-text").textContent = "Download cancelled. The files so far are kept; the next download continues from there.";
+      $("dlstate").textContent = "";
+    } else if (d.state === "running") {
       $("dlstate").textContent = "Downloading…" + pct;
       $("s-model-text").textContent = "Downloading…" + pct + ". You can do other things meanwhile.";
     } else if (d.state === "done") {
@@ -613,6 +619,14 @@ async function componentAction(act, id, label) {
   loadComponents();
 }
 
+// Cancel buttons: the model download (Simple view) and the running install or uninstall (Programs and models).
+$("s-model-cancel").onclick = async () => {
+  await api(`/api/download/${encodeURIComponent($("s-model").value)}/cancel`, {});
+};
+$("job-cancel").onclick = async () => {
+  if (jobWatch) await api(`/api/jobs/${encodeURIComponent(jobWatch.id)}/cancel`, {});
+};
+
 function watchJob(jobId, label) {
   $("job-panel").hidden = false;
   $("job-title").textContent = label || "";
@@ -625,6 +639,7 @@ function watchJob(jobId, label) {
     const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
     el.textContent = j.log;
     if (atEnd) el.scrollTop = el.scrollHeight;
+    $("job-cancel").hidden = j.state !== "running";
     if (j.state !== "running") {
       clearInterval(jobWatch.timer);
       jobWatch = null;
