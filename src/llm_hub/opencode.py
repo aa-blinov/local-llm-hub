@@ -8,7 +8,7 @@ import shutil
 import time
 from pathlib import Path
 
-from .config import OPENCODE_CONFIG, Registry
+from .config import OPENCODE_CONFIG, Registry, sampling_params
 from .engines import make_adapter
 
 PROVIDER = "local-hub"
@@ -62,7 +62,7 @@ def sync_config(reg: Registry, sup) -> dict:
             "name": m.label,
             "limit": {"context": int(ctx), "output": 8192},
             # Recommended sampling for general and coding tasks (model cards); greedy decoding loops on some models.
-            "options": {"temperature": 0.6, "top_p": 0.95, "top_k": 20},
+            "options": sampling_params(m),
         }
     block = {
         "npm": "@ai-sdk/openai-compatible",

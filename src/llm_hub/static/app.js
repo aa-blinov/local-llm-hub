@@ -113,7 +113,7 @@ function fillCatalog(c) {
   const sp = $("s-preset");
   for (const [k, label] of Object.entries(SIMPLE_PRESETS)) if (c.presets[k]) sp.add(new Option(label, k));
   sp.value = "chat";
-  sm.onchange = () => { renderSimple(); refreshPreflight(); };
+  sm.onchange = () => { fillModes(true); renderSimple(); refreshPreflight(); };
   $("s-purpose").onchange = refreshRecommend;
   $("s-recommend-btn").onclick = () => {
     if (!recommendedKey) return;
@@ -126,7 +126,7 @@ function fillCatalog(c) {
   $("s-model-btn").onclick = () => startModelDownload($("s-model").value);
   $("s-start").onclick = startSimple;
   $("s-stop").onclick = stopEngine;
-  $("s-send").onclick = () => sendChat($("s-prompt").value, 600, $("s-answer"), $("s-chatstat"));
+  $("s-send").onclick = () => sendChat($("s-prompt").value, 600, $("s-answer"), $("s-chatstat"), $("s-mode").value);
   $("s-copy").onclick = async () => {
     try { await navigator.clipboard.writeText(lastAnswer); $("s-chatstat").textContent = "Answer copied. Paste it into Word or Pages."; }
     catch (e) { $("s-chatstat").textContent = "Could not copy. Select the answer with the mouse and press Command+C."; }
@@ -134,6 +134,19 @@ function fillCatalog(c) {
 
   fillModels(d.model);
   refreshPreflight();
+}
+
+// Sampling modes of the selected model; the row is hidden when the model has none.
+function fillModes(resetToDefault) {
+  const sel = $("s-mode");
+  const info = catalog && catalog.models[$("s-model").value];
+  const modes = (info && info.modes) || [];
+  const keep = sel.value;
+  while (sel.options.length) sel.remove(0);  // innerHTML is guarded against no-op writes, so clear explicitly
+  for (const m of modes) sel.add(new Option(m.label, m.key));
+  const keepable = !resetToDefault && modes.some((m) => m.key === keep);
+  sel.value = keepable && keep ? keep : ((info && info.default_mode) || (modes[0] ? modes[0].key : ""));
+  $("s-mode-row").hidden = modes.length < 2;  // one optimal mode per model: nothing to choose
 }
 
 function rebuildSimpleModels(selected) {
@@ -145,6 +158,7 @@ function rebuildSimpleModels(selected) {
     sm.add(new Option(info.label, k));
   }
   sm.value = [...sm.options].some((o) => o.value === keep) ? keep : (sm.options[0] ? sm.options[0].value : "");
+  fillModes();
 }
 
 function fillModels(selected) {
@@ -516,14 +530,14 @@ function renderPlain(text) {
 
 let lastAnswer = "";
 
-async function sendChat(prompt, maxTokens, answerEl, statEl) {
+async function sendChat(prompt, maxTokens, answerEl, statEl, mode) {
   statEl.textContent = "Thinking… An answer usually takes 2–30 seconds.";
   chatBusy = true;
   renderSimple();
   answerEl.innerHTML = "";
   const copyRow = $("s-copy-row");
   if (copyRow) $("s-copy").disabled = true;
-  const r = await api("/api/chat", { prompt, max_tokens: maxTokens });
+  const r = await api("/api/chat", { prompt, max_tokens: maxTokens, mode: mode || null });
   chatBusy = false;
   if (r.ok) {
     lastAnswer = r.answer;

@@ -38,6 +38,7 @@ class StartBody(BaseModel):
 class ChatBody(BaseModel):
     prompt: str
     max_tokens: int = Field(300, ge=1, le=2048)
+    mode: str | None = None
 
 
 class ModelBody(BaseModel):
@@ -302,6 +303,6 @@ def create_app() -> FastAPI:
 
     @app.post("/api/chat")
     def chat(body: ChatBody):
-        return sup.chat(body.prompt, body.max_tokens)
+        return sup.chat(body.prompt, body.max_tokens, body.mode)
 
     return app

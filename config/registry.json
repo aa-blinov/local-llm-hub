@@ -44,64 +44,114 @@
       "label": "Ornith 1.5 35B-A3B, 4-bit (MLX)",
       "engine": "mlx",
       "repo": "ornith-ai/Ornith-1.5-35B-A3B-MLX-4bit",
-      "notes": "18 GiB of weights, 128k context. Measured about 55–65 tokens/s on this Mac. Default for coding.",
+      "notes": "18 GiB of weights, 128k context. Default for chat and quick tasks.",
       "simple": {
         "size": "≈18 GiB",
         "size_gib": 18.2,
-        "about": "Best choice for agentic coding with tools.",
+        "about": "Fast and reliable. Good for chat and everyday coding.",
         "rank": {
-          "agent": 1,
-          "chat": 1
+          "chat": 1,
+          "quick": 2,
+          "agent": 4
         },
-        "speed": "Measured on this Mac: about 55–65 tokens per second. Tool calls: 6 of 6 valid in our test on this Mac."
+        "speed": "Measured on this Mac: about 82 tokens per second."
+      },
+      "sampling": {
+        "default": "general",
+        "modes": {
+          "general": {
+            "label": "Best for this model (temp 0.6, top-p 0.95, top-k 20)",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20
+          }
+        }
       }
     },
     "qwen36-35b-a3b-4bit": {
       "label": "Qwen 3.6 35B-A3B, OptiQ 4-bit (MLX)",
       "engine": "mlx",
       "repo": "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit",
-      "notes": "Mixture of experts, about 22 GiB. OptiQ build: tool calls stayed valid in community tests.",
+      "notes": "22 GiB. Best answer quality in our benchmarks; slower than Ornith.",
       "simple": {
         "size": "≈22 GiB",
         "size_gib": 21.9,
-        "about": "Second choice for agentic coding. Fast mixture of experts.",
+        "about": "Most accurate in our coding tests. Use for hard tasks.",
         "rank": {
-          "agent": 2,
-          "chat": 4
-        },
-        "speed": "Not measured on an M4 Pro yet. Tool calls: 100% valid in community tests (M4 Max); the plain 4-bit build failed 17% of calls."
-      }
-    },
-    "gpt-oss-20b-mxfp4-q8": {
-      "label": "GPT-OSS 20B, MXFP4 (MLX)",
-      "engine": "mlx",
-      "repo": "mlx-community/gpt-oss-20b-MXFP4-Q8",
-      "notes": "Open model from OpenAI, about 11 GiB.",
-      "simple": {
-        "size": "≈11 GiB",
-        "size_gib": 11.3,
-        "about": "Open MoE model from OpenAI. Fast for chat; tool use not tested here.",
-        "rank": {
-          "quick": 1,
+          "agent": 1,
           "chat": 3
         },
-        "speed": "Community measurement on an M4 Pro 48 GB: about 73 tokens per second. Not measured on this Mac yet."
+        "speed": "Measured on this Mac: about 60 tokens per second."
+      },
+      "sampling": {
+        "default": "coding",
+        "modes": {
+          "coding": {
+            "label": "Best for this model (temp 0.6, top-p 0.95, top-k 20, no presence penalty)",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "presence_penalty": 0.0
+          }
+        }
       }
     },
-    "qwen3-30b-a3b-2507-4bit": {
-      "label": "Qwen 3 30B-A3B Instruct, 4-bit (MLX)",
+    "groot-19b-a3b-optiq4": {
+      "label": "Groot 19B-A3B, OptiQ 4-bit (MLX)",
       "engine": "mlx",
-      "repo": "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit",
-      "notes": "Mixture of experts, 128 experts, about 16 GiB.",
+      "repo": "mlx-community/Groot-19B-A3B-OptiQ-4bit",
+      "notes": "13 GiB. Compact and fast, strong on coding tests.",
       "simple": {
-        "size": "≈16 GiB",
-        "size_gib": 16.0,
-        "about": "Mixture-of-experts model for everyday questions and chat.",
+        "size": "≈13 GiB",
+        "size_gib": 12.6,
+        "about": "Compact and fast. Good balance for coding.",
         "rank": {
-          "quick": 2,
-          "chat": 5
+          "agent": 2,
+          "quick": 1,
+          "chat": 2
         },
-        "speed": "Not measured on this Mac yet."
+        "speed": "Measured on this Mac: about 67 tokens per second."
+      },
+      "sampling": {
+        "default": "coding",
+        "modes": {
+          "coding": {
+            "label": "Best for this model (temp 0.6, top-p 0.95, top-k 20, no presence penalty)",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "presence_penalty": 0.0
+          }
+        }
+      }
+    },
+    "kat-coder-v2-optiq4": {
+      "label": "KAT-Coder V2.5 Dev, OptiQ 4-bit (MLX)",
+      "engine": "mlx",
+      "repo": "mlx-community/KAT-Coder-V2.5-Dev-OptiQ-4bit",
+      "notes": "20 GiB. Coding model; instruction mode did best in our tests.",
+      "simple": {
+        "size": "≈20 GiB",
+        "size_gib": 20.4,
+        "about": "Coding model. Instruction mode gives the best results.",
+        "rank": {
+          "agent": 3,
+          "quick": 3,
+          "chat": 4
+        },
+        "speed": "Measured on this Mac: about 62 tokens per second."
+      },
+      "sampling": {
+        "default": "instruct",
+        "modes": {
+          "instruct": {
+            "label": "Best for this model (temp 0.7, top-p 0.8, top-k 20, presence 1.5)",
+            "temperature": 0.7,
+            "top_p": 0.8,
+            "top_k": 20,
+            "presence_penalty": 1.5
+          }
+        }
       }
     }
   },

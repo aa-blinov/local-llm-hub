@@ -38,6 +38,7 @@ class Model:
     found: Path | None = None  # path found by scanning model folders
     origin: str = "registry"   # registry | folder
     simple: dict | None = None  # optional block for the Simple view: size, about, recommended
+    sampling: dict | None = None  # {'default': mode, 'modes': {mode: {temperature, top_p, top_k, presence_penalty}}}
 
     def resolve(self) -> Path | None:
         """Path to the model files: explicit path, folder scan result, or Hugging Face cache snapshot."""
@@ -131,6 +132,21 @@ def save_user_models(items: list[dict], path: Path = USER_MODELS_PATH) -> None:
     tmp.replace(path)
 
 
+SAMPLING_KEYS = ("temperature", "top_p", "top_k", "presence_penalty", "min_p")
+
+
+def sampling_params(model, mode: str | None = None) -> dict:
+    """Sampling parameters for a model's mode (default mode if none is given). Empty if the model has no modes."""
+    cfg = getattr(model, "sampling", None) or {}
+    modes = cfg.get("modes") or {}
+    if not modes:
+        return {}
+    key = mode if mode in modes else cfg.get("default")
+    if key not in modes:
+        return {}
+    return {k: v for k, v in modes[key].items() if k in SAMPLING_KEYS}
+
+
 def registry_stamp(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> tuple:
     """Modification times of the registry files; a change means the registry should be reloaded."""
     return tuple(Path(p).stat().st_mtime_ns if Path(p).exists() else 0 for p in (path, user_path))
@@ -154,7 +170,7 @@ def load(path: Path = REGISTRY_PATH, user_path: Path = USER_MODELS_PATH) -> Regi
             raise ValueError(f"model {k}: unknown engine {v['engine']}")
         base[k] = Model(k, v["label"], v["engine"], v.get("repo"), _expand(v.get("path")),
                         _expand(v.get("mmproj")), v.get("notes", ""),
-                        simple=v.get("simple"))
+                        simple=v.get("simple"), sampling=v.get("sampling"))
     for item in load_user_models(user_path):
         if item.get("engine") in engines and item.get("key") and item.get("repo"):
             base[item["key"]] = Model(item["key"], item.get("label", item["key"]), item["engine"],

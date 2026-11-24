@@ -10,7 +10,7 @@ import threading
 import time
 from pathlib import Path
 
-from .config import APC_DIR, HISTORY_PATH, LOG_DIR, Model, Registry
+from .config import APC_DIR, HISTORY_PATH, LOG_DIR, Model, Registry, sampling_params
 from .engines import make_adapter
 
 PAGE = 16384
@@ -179,7 +179,9 @@ class Supervisor:
 
     def catalog(self) -> dict:
         models = {k: {"label": m.label, "engine": m.engine, "exists": m.exists, "notes": m.notes,
-                      "repo": m.repo, "can_download": bool(m.repo), "simple": m.simple}
+                      "repo": m.repo, "can_download": bool(m.repo), "simple": m.simple,
+                      "modes": [{"key": k, "label": v.get("label", k)} for k, v in ((m.sampling or {}).get("modes") or {}).items()],
+                      "default_mode": (m.sampling or {}).get("default")}
                   for k, m in self.reg.models.items()}
         engines = {k: {"label": e.label, "ctx_choices": e.ctx_choices, "prefill_choices": e.prefill_choices,
                        "binary_ok": e.binary.exists()} for k, e in self.reg.engines.items()}
@@ -201,7 +203,7 @@ class Supervisor:
         opts = {k: v for k, v in p.items() if k not in ("label", "model")}
         return p.get("model"), opts
 
-    def chat(self, prompt: str, max_tokens: int) -> dict:
+    def chat(self, prompt: str, max_tokens: int, mode: str | None = None) -> dict:
         import urllib.request
         if not self._alive() or self.current is None:
             return {"ok": False, "error": "the engine is not running"}
@@ -213,7 +215,7 @@ class Supervisor:
             "model": adapter.chat_model_id(self.current, loaded),
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": min(int(max_tokens), 2048),
-            **SAMPLING,
+            **(sampling_params(self.current, mode) or SAMPLING),
             # Deliberate: the panel's test chat is a quick check, so the model's reasoning is switched off.
             # Benchmarks ran with the default (reasoning on), so this check is faster but not identical.
             "reasoning_effort": "none",
