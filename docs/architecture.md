@@ -27,3 +27,18 @@ One HTML file and one JavaScript file, with no build step. Data is refreshed by 
 ## External data
 
 Settings are kept in `config/settings.json` (with the token, permissions 600). Logs go to `logs/`. Models are cached in the default Hugging Face folder or in the folder chosen by the user.
+
+## Memory estimate
+
+One formula, used by the pre-start check and by the context advice:
+
+    needed = weights + KV cache + overhead + prefix cache
+
+- **weights**: size of the model files on disk.
+- **KV cache**: `full_attention_layers × 2 × kv_heads × head_dim × 2 bytes × context`. The numbers come from the model's `config.json`. For Ornith and the other Qwen 3.5/3.6 MoE models this is 20 KiB per token; 128k tokens is about 2.5 GiB.
+- **overhead**: activation buffers and runtime memory above weights and KV, measured with MLX at a 512-token prefill step. Each model stores its measured points in `config/registry.json` (`memory.overhead_gib`, at 8k, 32k, 64k and 128k tokens) and the value is interpolated between them. Above the measured range the generic rule applies: 0.6 GiB plus 1 GiB per 64k tokens, which is the conservative side. Models without measurements use the generic rule.
+- **prefix cache**: the `apc_mem_gb` cap (6 GB on Macs with 48 GB or more, 2 GB below). The engine never exceeds this cap, so the full cap is counted.
+
+The advice compares `needed` with 75% of the Mac's total memory and picks the largest context that fits. The 75% share is a planning margin, not a measured limit.
+
+Measured with MLX, prefill step 512: the KV term matches the formula within about 0.2 GiB up to 64k; at 128k the formula is about 0.9 GiB higher than the measurement, which is the safe side. Contexts above 128k are not measured.
