@@ -88,8 +88,8 @@ function fillCatalog(c) {
   const eng = $("engine");
   for (const [k, e] of Object.entries(c.engines)) eng.add(new Option(e.label + (e.binary_ok ? "" : " (not installed)"), k));
   eng.onchange = () => { fillModels(); fillCtx(); refreshPreflight(); };
-  $("model").onchange = () => { fillCtx(); refreshPreflight(); updateDownload(); };
-  $("ctx").onchange = refreshPreflight;
+  $("model").onchange = () => { ctxTouched = false; fillCtx(); refreshPreflight(); updateDownload(); };
+  $("ctx").onchange = () => { ctxTouched = true; refreshPreflight(); };
   $("prefill").onchange = refreshPreflight;
   pre.onchange = applyPreset;
   $("start").onclick = startAdvanced;
@@ -173,6 +173,18 @@ function fillModels(selected) {
   updateDownload();
 }
 
+// Context advice from this Mac's total memory. Until the user picks a context, the field follows the advice.
+let ctxTouched = false;
+async function refreshCtxAdvice() {
+  const key = $("model").value;
+  const box = $("ctx-advice");
+  if (!key || $("engine").value !== "mlx") { box.textContent = ""; return; }
+  const a = await api(`/api/context-advice?model=${encodeURIComponent(key)}`);
+  if (!a || !a.ok) { box.textContent = (a && a.message) || ""; return; }
+  box.textContent = `${a.message} Reading step ${a.prefill}, prefix cache ${a.apc_mem_gb} GB.`;
+  if (!ctxTouched && a.ctx) { $("ctx").value = String(a.ctx); refreshPreflight(); }
+}
+
 function fillCtx(selected) {
   const e = catalog.engines[$("engine").value];
   const cs = $("ctx");
@@ -181,6 +193,7 @@ function fillCtx(selected) {
   if (selected) cs.value = selected;
   $("mlxopts").style.display = $("engine").value === "mlx" ? "" : "none";
   fillPrefill();
+  refreshCtxAdvice();
 }
 
 function fillPrefill(selected) {

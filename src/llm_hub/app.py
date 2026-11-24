@@ -19,7 +19,7 @@ def _home_short(p) -> str:
     s, home = str(p), str(Path.home())
     return "~" + s[len(home):] if s.startswith(home) else s
 from .opencode import sync_config, status_config
-from .preflight import estimate
+from .preflight import recommend_context, estimate
 from .supervisor import Supervisor, history_tail
 
 STATIC = Path(__file__).parent / "static"
@@ -155,6 +155,19 @@ def create_app() -> FastAPI:
     @app.post("/api/stop")
     def stop():
         return sup.stop()
+
+    @app.get("/api/context-advice")
+    def context_advice(model: str):
+        from .recommend import memory_gib
+        m = model_or_404(model)
+        total = memory_gib()
+        if total is None:
+            return {"ok": False, "message": "Memory of this Mac could not be read."}
+        choices = reg.engines[m.engine].ctx_choices
+        advice = recommend_context(m, choices, total)
+        advice["apc_mem_gb"] = 6 if total >= 32 else 3
+        advice["prefill"] = 512
+        return advice
 
     @app.get("/api/preflight")
     def preflight(model: str, ctx: int):

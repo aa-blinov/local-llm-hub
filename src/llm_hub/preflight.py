@@ -72,6 +72,36 @@ def _kv_bytes_per_token(model: Model) -> int | None:
     return full * 2 * kv_heads * head_dim * FP16
 
 
+BUDGET_SHARE = 0.75  # plan to use at most this share of the Mac's total memory
+
+
+def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE) -> dict:
+    """Largest context from `choices` whose weights + KV cache + overhead fit in `share` of total memory.
+
+    Uses total memory, not the currently free memory, so the advice is about the hardware, not the moment.
+    """
+    weights = _weights_bytes(model)
+    if weights is None:
+        return {"ok": False, "message": "Download the model first: its size is needed for the advice."}
+    if not choices:
+        return {"ok": False, "message": "This engine has no context choices."}
+    kv_tok = _kv_bytes_per_token(model)
+    budget = total_gib * share
+    options = []
+    for ctx in sorted(choices, reverse=True):
+        kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
+        need = weights / GIB + kv + OVERHEAD_GIB
+        options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
+    fitting = [o["ctx"] for o in options if o["fits"]]
+    best = max(fitting) if fitting else min(choices)
+    message = (f"Recommended for this Mac ({total_gib:.0f} GiB): {best // 1024}k context."
+               if fitting else
+               f"Even the smallest context ({min(choices) // 1024}k) is above the comfortable limit for this Mac "
+               f"({budget:.0f} GiB of {total_gib:.0f} GiB). Use a smaller model.")
+    return {"ok": True, "ctx": best, "fits": bool(fitting), "budget_gib": round(budget, 1),
+            "total_gib": round(total_gib, 1), "options": options, "message": message}
+
+
 def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
     """reclaim_gib: memory freed if the current run of this same model is stopped."""
     weights = _weights_bytes(model)
