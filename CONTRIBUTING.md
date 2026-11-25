@@ -26,14 +26,15 @@ Thanks for looking at local-llm-hub.
 ## Running the checks
 
 ```bash
-echo 'replace with the test command'
+# Python: the test suite (offline, no models needed)
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e '.[dev]'
+.venv/bin/python -m pytest -q tests
+
+# Interface: build it. Commit the rebuilt files in src/llm_hub/static/app/.
+cd frontend && npm install && npm run build
 ```
 
-The house-style check runs in CI on every pull request. To run it locally:
-
-```bash
-python3 scripts/housecheck.py --strict .
-```
+CI runs the same commands, plus the house-style check on every pull request.
 
 ## Commit messages
 
@@ -50,4 +51,4 @@ after everyone has forgotten it.
 ## Code of conduct
 
 By participating you agree to abide by the
-[Code of Conduct](../CODE_OF_CONDUCT.md).
+[Code of Conduct](CODE_OF_CONDUCT.md).

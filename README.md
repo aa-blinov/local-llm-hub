@@ -28,17 +28,18 @@ A web panel for running language models on a Mac with Apple Silicon. Pick a mode
 ./scripts/bootstrap.sh --engine mlx        # mlx, llamacpp or both
 ```
 
-The installer creates the environment, installs the packages, builds llama.cpp when needed, sets up autostart and opens the panel. Running it again is safe.
+The installer creates the environment, installs the packages, builds llama.cpp when needed, sets up autostart and opens the panel.
 
 ## What it does
 
 - **Two engines.** MLX (`mlx_vlm.server`) for models in MLX format and llama.cpp (`llama-server`, Metal) for GGUF. You choose the engine during installation or in the interface.
-- **Memory check before start.** The panel estimates the weights and KV cache for the chosen conversation length and compares them with available memory. It warns you before the model loads.
+- **Memory check before start.** The panel estimates the weights, the KV cache and the prefix cache for the chosen conversation length and compares them with available memory. It warns you before the model loads.
+- **Long conversations, less memory.** For MLX models the KV cache can be stored in 8-bit or 4-bit (4-bit is the default). Context sizes run from 32k to 256k tokens; the panel shows which of them fit this Mac.
 - **Automatic restart.** If an engine crashes, it restarts by itself, at most three times in ten minutes. Every event is written to a local history.
-- **Model downloads** from Hugging Face in the background, with progress and resume after an interruption. Gated models are supported with a token.
+- **Model downloads** from Hugging Face in the background, with progress, resume after an interruption and cancel. Gated models are supported with a token.
 - **Existing models.** Point the panel at a folder with models (an external drive, LM Studio) and it uses them without downloading again.
-- **opencode integration.** A button writes a `local-hub` provider into the opencode configuration. Other providers are left untouched, and a backup is created first.
-- **Settings.** Autostart at login, start view, download folder, token, swap warning threshold.
+- **opencode integration.** A button writes a `local-hub` provider into the opencode configuration with the context selected in the panel and a 32k output limit. Other providers are left untouched, and a backup is created first.
+- **Settings.** Autostart at login, start view, download folder, token, swap warning threshold. Light, dark or automatic theme.
 
 The app writes to disk only inside the project folder and to a few standard locations: the Hugging Face cache, the opencode configuration (`~/.config/opencode/`) and, if autostart is on, a launch agent in `~/Library/LaunchAgents/`. Settings that contain a token are stored in `config/settings.json` with owner-only permissions, and they are excluded from git.
 

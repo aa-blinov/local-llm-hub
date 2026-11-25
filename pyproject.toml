@@ -1,6 +1,6 @@
 [project]
 name = "local-llm-hub"
-version = "0.1.0"
+version = "0.2.0"
 description = "Web panel to run local LLMs on Apple Silicon: choose an engine (MLX or llama.cpp), a model and its parameters."
 requires-python = ">=3.10"
 dependencies = [
