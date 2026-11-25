@@ -49,6 +49,7 @@ uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -e '.[dev]'
 .venv/bin/python -m llm_hub              # panel on http://127.0.0.1:8765
 .venv/bin/python -m pytest tests         # tests: offline, no models required
+cd frontend && npm install && npm run build   # rebuild the interface into src/llm_hub/static/app (commit the result)
 ```
 
 Layout:
