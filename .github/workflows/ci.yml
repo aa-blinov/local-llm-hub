@@ -41,6 +41,7 @@ jobs:
       - name: Syntax
         run: |
           python3 -m py_compile src/llm_hub/*.py
-          node --check src/llm_hub/static/app.js
+          (cd frontend && npm ci --no-audit --no-fund && npm run build)
+          test -z "$(git status --porcelain src/llm_hub/static/app)" || (echo 'Built app is out of date: run npm run build in frontend/ and commit it' && git status --short src/llm_hub/static/app && exit 1)
           bash -n scripts/bootstrap.sh
           bash -n install.command
