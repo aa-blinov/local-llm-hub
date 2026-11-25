@@ -4,43 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Local LLM Hub</title>
-  <link rel="stylesheet" href="/static/fonts/ibm-plex-sans.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d3557'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f6f4ef'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/monos/tokens.css">
+  <link rel="stylesheet" href="/static/monos/themes.css">
+  <link rel="stylesheet" href="/static/monos/fonts.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23458588'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23fbf1c7'/%3E%3C/svg%3E">
   <script>
     // Apply the saved theme and section before the first paint, so nothing flashes.
     try {
-      var savedTheme = localStorage.getItem("theme");
-      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+      var savedTheme = localStorage.getItem("theme") || "";
+      document.documentElement.dataset.mode = savedTheme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
       var wanted = location.hash.replace("#", "") || localStorage.getItem("start_view") || "simple";
       document.documentElement.dataset.view = (wanted === "panel" || wanted === "components") ? wanted : "simple";
     } catch (e) {}
   </script>
   <style>
-    /* Tokens: warm neutral background, one dark accent, hairlines instead of shadows. */
+    /* Tokens come from the monos-ui kit (tokens.css, themes.css). These names keep the panel's rules readable. */
     :root {
-      --on-ok: #ffffff;
-      --ground: #f6f4ef; --panel: #fbfaf7; --ink: #1c1a17; --muted: #5f5b54;
-      --hair: rgba(28, 26, 23, .14); --action: #1d3557; --on-action: #ffffff;
-      --ok: #2f6b4f; --wait: #8a5a12; --off: #9b2c2c;
-      --r-lg: 12px; --r-sm: 8px; --r-btn: 8px;
-      --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --ground: #14130f; --panel: #1b1a16; --ink: #f1eee7; --muted: #aaa398;
-        --hair: rgba(241, 238, 231, .14); --action: #8fb0d9; --on-action: #0d1726;
-        --ok: #7fc59f; --wait: #e0b067; --off: #e58a8a;
-      }
-    }
-    :root[data-theme="dark"] {
-      --ground: #14130f; --panel: #1b1a16; --ink: #f1eee7; --muted: #aaa398;
-      --hair: rgba(241, 238, 231, .14); --action: #8fb0d9; --on-action: #0d1726;
-      --ok: #7fc59f; --wait: #e0b067; --off: #e58a8a;
-    }
-    :root[data-theme="light"] {
-      --ground: #f6f4ef; --panel: #fbfaf7; --ink: #1c1a17; --muted: #5f5b54;
-      --hair: rgba(28, 26, 23, .14); --action: #1d3557; --on-action: #ffffff;
-      --ok: #2f6b4f; --wait: #8a5a12; --off: #9b2c2c;
+      --on-ok: var(--ui-bg);
+      --ground: var(--ui-bg); --panel: var(--ui-bg); --ink: var(--ui-ink); --muted: var(--ui-ink-soft);
+      --hair: var(--ui-line); --action: var(--ui-accent); --on-action: var(--ui-bg);
+      --ok: var(--ui-success-text); --wait: var(--ui-warning-text); --off: var(--ui-danger-text);
+      --r-lg: var(--ui-radius); --r-sm: var(--ui-radius); --r-btn: var(--ui-radius);
+      --s-1: var(--ui-space-tight); --s-2: var(--ui-space-snug); --s-3: var(--ui-space-base);
+      --s-4: var(--ui-space-comfortable); --s-6: var(--ui-space-roomy); --s-8: var(--ui-space-section);
     }
     * { box-sizing: border-box; }
     .lbl-short { display: none; }
@@ -51,7 +37,7 @@
     html[data-view="components"] #view-components { display: flex !important; }
     html { scrollbar-gutter: stable; }
     html, body { height: 100%; margin: 0; background: var(--ground); color: var(--ink);
-      font: 400 16px/1.5 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif; }
+      font: 400 16px/1.5 var(--ui-font); }
     body { overflow: hidden; display: flex; }
 
     /* Sidebar: fixed width, everything clipped so text changes do not move it. */
@@ -63,7 +49,7 @@
     .tabs { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
     .tab { display: flex; align-items: center; padding: 0 var(--s-3); min-height: 44px; border-radius: var(--r-btn);
       color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
-    .tab.on { background: var(--panel); color: var(--ink); font-weight: 600; }
+    .tab.on { background: var(--ui-surface); color: var(--ink); font-weight: 600; }
     .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
     .runinfo { min-width: 0; height: 30px; line-height: 28px;
       font-size: 14px; color: var(--muted); padding: 0 var(--s-3); border: 1px solid var(--hair); border-radius: 999px;
@@ -91,8 +77,8 @@
     .step h3 { margin: 8px 0 var(--s-1); font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
     .explain { margin: 0 0 var(--s-3); color: var(--muted); font-size: 15px; }
     .card { background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: var(--s-6); transition: border-color .2s; }
-    .card:hover { border-color: rgba(28,26,23,.28); }
-    .step.done .card { border-color: rgba(47,107,79,.35); }
+    .card:hover { border-color: var(--ui-line-strong); }
+    .step.done .card { border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
     .step.locked .card { opacity: .55; }
     .big { min-height: 52px; font-size: 17px; padding: 0 var(--s-8); }
     .msg { margin-top: var(--s-3); font-size: 15px; min-height: 2.8em; }
@@ -136,7 +122,7 @@
       border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-2) var(--s-4); font-family: inherit; font-size: 16px; line-height: 1.4; }
     textarea { min-height: 96px; resize: vertical; }
     ::placeholder { color: var(--muted); opacity: 1; }  /* 4.5:1 or better in both themes */
-    select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+    select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
     input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--action); vertical-align: -4px; margin-right: var(--s-2); }
     .check { display: flex; align-items: center; font-size: 16px; color: var(--ink); margin: var(--s-3) 0 0; }
     .hint { font-size: 14px; color: var(--muted); margin: var(--s-2) 0 0; min-height: 1.2em; }
@@ -150,13 +136,13 @@
     pre.code { white-space: pre; background: var(--ground); border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-3) var(--s-4); font-size: 14px; }
     pre { margin: 0; overflow: auto; white-space: pre-wrap; font: 14px/1.6 ui-monospace, Menlo, monospace; background: var(--ground); border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-4); }
 
-    button { min-height: 44px; padding: 0 var(--s-6); border-radius: var(--r-btn); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; border: 1px solid var(--hair); background: transparent; color: var(--ink); }
-    button.primary { background: var(--action); color: var(--on-action); border-color: var(--action); box-shadow: none; }
-    button.primary:not(:disabled):active { transform: translateY(1px); }
-    button { transition: filter .15s, transform .1s; }
-    button.small { min-height: 44px; padding: 0 var(--s-4); font-size: 15px; font-weight: 500; }
-    button:disabled { opacity: .4; cursor: default; }
-    button:not(:disabled):hover { filter: brightness(.97); }
+    button { min-height: 44px; padding: 0 var(--s-4); border: 0; border-radius: var(--r-btn); background: transparent; color: var(--ink);
+      font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+    button.primary { font-weight: 700; }
+    button.small { min-height: 44px; padding: 0 var(--s-3); font-size: 14px; font-weight: 500; }
+    button:not(:disabled):hover { opacity: .7; }
+    button:not(:disabled):active { opacity: .55; }
+    button:disabled { opacity: .35; cursor: default; }
 
     /* One progress indicator: install, download, model loading, answering */
     .loader { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-sm); }
@@ -210,7 +196,7 @@
       .runinfo { flex: 1 1 auto; order: 1; }
       .runinfo:empty { display: none; }
       #theme { order: 2; }
-      .state { order: 3; font-size: 14px; flex: 1 1 auto; min-width: 0; white-space: normal; }
+      .state { order: 3; font-size: 14px; flex: 1 1 100%; width: 100%; min-width: 0; padding: 0; white-space: normal; }
       .lbl-long { display: none; }
       .lbl-short { display: inline; }
       main { padding: var(--s-4); }

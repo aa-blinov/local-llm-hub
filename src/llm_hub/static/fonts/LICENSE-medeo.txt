@@ -1,0 +1,2 @@
+Medeo Mono is distributed with the monos-ui kit (https://github.com/aa-blinov/monos-ui) under the SIL Open Font License, Version 1.1.
+The kit's own code is MIT licensed (see ../monos/LICENSE-monos.txt).

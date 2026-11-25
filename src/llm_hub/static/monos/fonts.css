@@ -1,0 +1,16 @@
+/* Medeo Mono from the monos-ui kit, shipped with the panel so no page loads a font from a remote host.
+   Variable file covering Latin and Cyrillic. SIL Open Font License 1.1 (see ../fonts/LICENSE-medeo.txt). */
+@font-face {
+  font-family: 'Medeo Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-mono.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Medeo Mono';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-mono-italic.woff2') format('woff2-variations');
+}

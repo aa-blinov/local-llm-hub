@@ -739,17 +739,21 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
-// ---- theme: light, dark or follow the system ----
+// ---- theme: light, dark or follow the system (the monos-ui kit reads data-mode) ----
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+let themeChoice = "";
 function applyTheme(t) {
-  if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-  try { localStorage.setItem("theme", t || ""); } catch (e) {}
+  themeChoice = t || "";
+  document.documentElement.dataset.mode = themeChoice || (systemDark.matches ? "dark" : "light");
+  try { localStorage.setItem("theme", themeChoice); } catch (e) {}
   // The button shows the current choice: auto, dark or light.
-  $("theme").textContent = "Theme: " + (t || "auto");
+  $("theme").textContent = "Theme: " + (themeChoice || "auto");
 }
 $("theme").onclick = () => {
-  const cur = document.documentElement.dataset.theme || "";
-  applyTheme(cur === "" ? "dark" : cur === "dark" ? "light" : "");
+  applyTheme(themeChoice === "" ? "dark" : themeChoice === "dark" ? "light" : "");
 };
+// In auto mode the page follows the system when it changes.
+systemDark.addEventListener("change", () => { if (!themeChoice) applyTheme(""); });
 try { applyTheme(localStorage.getItem("theme") || ""); } catch (e) {}
 
 // ---- models added from Hugging Face ----
