@@ -1,0 +1,43 @@
+/* Medeo, shipped with the kit so no page loads a font from a remote host.
+   One variable file per style covers Latin and Cyrillic; Medeo Pixel is a
+   woff because its authors publish no woff2. SIL Open Font License 1.1. */
+
+@font-face {
+  font-family: 'Medeo Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-mono.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Medeo Mono';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-mono-italic.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Medeo Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-sans.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Medeo Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../fonts/medeo-sans-italic.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Medeo Pixel';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/medeo-pixel.woff') format('woff-variations');
+}
