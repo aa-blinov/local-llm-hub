@@ -78,13 +78,8 @@ export const engineOptions = (c) => {
     .map(([k, e]) => ({ value: k, label: e.label + (e.binary_ok ? '' : ' (not installed)') }));
 };
 
-export const presetOptions = (c) => {
-  if (!c) return [{ value: '', label: '— manual —' }];
-  return [
-    { value: '', label: '— manual —' },
-    ...Object.entries(c.presets).map(([k, p]) => ({ value: k, label: p.label })),
-  ];
-};
+// The modes the old panel offered: the presets only. With nothing running, the first one is selected.
+export const presetOptions = (c) => (c ? Object.entries(c.presets).map(([k, p]) => ({ value: k, label: p.label })) : []);
 
 export const simpleModelOptions = (c) => {
   if (!c) return [];

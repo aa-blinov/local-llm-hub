@@ -104,7 +104,7 @@
         <h2 class="panel-title">Launch</h2>
         <label class="lbl first" for="preset">Mode</label>
         <p class="hint">A ready-made set: Chat for questions, Coding for programs.</p>
-        <Select id="preset" options={presetOptions(c)} value={a.preset} on:change={(e) => applyPreset(e.detail.value)} />
+        <Select id="preset" options={presetOptions(c)} value={a.preset || Object.keys(c?.presets || {})[0] || ''} on:change={(e) => applyPreset(e.detail.value)} />
         <Notice tone={{ ok: 'success', tight: 'warning', risk: 'danger' }[$verdictAdv.verdict] || 'info'} class="mt-3">
           {$verdictAdv.message}
         </Notice>

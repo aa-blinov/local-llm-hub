@@ -10,6 +10,7 @@
       // The kit's themes.css reads data-mode on the root element.
       try {
         var savedTheme = localStorage.getItem("theme") || "";
+        document.documentElement.dataset.theme = "catppuccin";
         document.documentElement.dataset.mode = savedTheme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
       } catch (e) {}
     </script>

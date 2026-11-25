@@ -45,7 +45,7 @@ Contrast: body ink is at least 7:1 on the ground in both modes; secondary text i
 
 ## Typography
 
-Medeo Mono, shipped in `static/fonts/` (SIL Open Font License 1.1). No remote font is loaded. Body text is 16 px,
+Medeo Mono, bundled by the build into `static/app/assets/` (SIL Open Font License 1.1). No remote font is loaded. Body text is 16 px,
 labels 14 px, panel titles 20 px. Text is never smaller than 14 px. Numbers use the same face, so they line up.
 
 ## Layout

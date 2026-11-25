@@ -36,7 +36,7 @@ bash -n scripts/bootstrap.sh
 - Updating the interface must not move elements: block heights are set in advance.
 - Restarting the panel from its own request cuts off that request. For autostart, only the agent file is written.
 - Emoji are not used in project files.
-- `static/monos/` and `static/fonts/` are copied from aa-blinov/monos-ui (MIT / SIL OFL). Do not edit them by hand; take a newer copy from the kit instead.
+- `frontend/vendor/monos-ui/` is copied from aa-blinov/monos-ui (MIT). Do not edit it by hand; take a newer copy from the kit instead (see its VERSION file).
 - The panel is built with `cd frontend && npm install && npm run build` (Svelte 4 on the monos-ui kit). Do not add another framework without a decision in DESIGN.md.
 
 ## Working rules

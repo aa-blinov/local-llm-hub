@@ -10,6 +10,7 @@ export const themeChoice = writable('');
 export function applyTheme(t) {
   themeChoice.set(t || '');
   const mode = (t || '') || (systemDark && systemDark.matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = 'catppuccin';  // the kit's palette; light or dark follows the choice
   document.documentElement.dataset.mode = mode;
   try { localStorage.setItem('theme', t || ''); } catch (e) {}
 }

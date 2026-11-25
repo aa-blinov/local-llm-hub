@@ -65,7 +65,7 @@ h2.panel-sub { margin-top: var(--ui-space-roomy); font-size: 18px; }
 
 
 .row-actions { display: flex; gap: var(--ui-space-snug); align-items: center; flex-wrap: wrap; margin-top: var(--ui-space-base); }
-.actions { display: flex; gap: var(--ui-space-base); flex-wrap: wrap; margin-top: var(--ui-space-comfortable); }
+.actions { display: flex; gap: var(--ui-space-base); flex-wrap: wrap; justify-content: flex-end; margin-top: var(--ui-space-comfortable); }
 
 /* Simple view: four steps in one column */
 .steps { max-width: 800px; margin: 0 auto; display: grid; gap: var(--ui-space-roomy); padding: var(--ui-space-snug) 0 var(--ui-space-section); }
