@@ -47,12 +47,14 @@ def status_config(reg: Registry) -> dict:
     }
 
 
-def sync_config(reg: Registry, sup) -> dict:
+def sync_config(reg: Registry, sup, requested_ctx: int | None = None) -> dict:
     try:
         cfg = _load()
     except ValueError as e:
         return {"ok": False, "error": str(e)}
-    ctx = (sup.opts or {}).get("ctx") or reg.default.get("ctx", 131072)
+    # The context the user picked on the page wins; the running engine is only used when nothing was sent.
+    running_ctx = (sup.opts or {}).get("ctx") if sup.status()["running"] else None
+    ctx = int(requested_ctx or running_ctx or reg.default.get("ctx", 131072))
     models = {}
     for key, m in reg.models.items():
         mid = _model_id(reg, key)
@@ -76,4 +78,7 @@ def sync_config(reg: Registry, sup) -> dict:
         backup = OPENCODE_CONFIG.with_name(f"{OPENCODE_CONFIG.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
         shutil.copy2(OPENCODE_CONFIG, backup)
     OPENCODE_CONFIG.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return {"ok": True, "path": str(OPENCODE_CONFIG), "models": len(models), "context": int(ctx)}
+    note = None
+    if running_ctx and int(running_ctx) != ctx:
+        note = f"The running model was started with {int(running_ctx):,} tokens. Start it with {ctx:,} tokens, or opencode requests will be too long."
+    return {"ok": True, "path": str(OPENCODE_CONFIG), "models": len(models), "context": ctx, "note": note}

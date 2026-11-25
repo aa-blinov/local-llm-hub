@@ -369,9 +369,9 @@ async function clearCache() {
 }
 
 async function syncOpencode() {
-  const r = await api("/api/opencode/sync", {});
+  const r = await api("/api/opencode/sync", { ctx: Number($("ctx").value) || undefined });
   $("ocmsg").textContent = r.ok
-    ? `opencode settings updated: ${r.models} models, context ${Number(r.context).toLocaleString("en-US")}. A backup was created.`
+    ? `opencode settings updated: ${r.models} models, context ${Number(r.context).toLocaleString("en-US")}. A backup was created.` + (r.note ? " " + r.note : "")
     : r.error;
 }
 

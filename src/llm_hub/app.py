@@ -226,8 +226,8 @@ def create_app() -> FastAPI:
         return status_config(reg)
 
     @app.post("/api/opencode/sync")
-    def opencode_sync():
-        return sync_config(reg, sup)
+    def opencode_sync(body: dict | None = None):
+        return sync_config(reg, sup, (body or {}).get("ctx"))
 
     @app.get("/api/components")
     def components_list():
