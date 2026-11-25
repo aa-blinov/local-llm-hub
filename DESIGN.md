@@ -17,13 +17,12 @@ colors:
 
 ## Source
 
-The panel uses the plain-CSS layer of [monos-ui](https://github.com/aa-blinov/monos-ui) 2.1.0 (commit `78158dc`):
-`static/monos/tokens.css`, `static/monos/themes.css` and `static/monos/fonts.css`. The files are copied, not built;
-do not edit them by hand. The kit's Svelte components and Tailwind preset are not used: the panel is plain HTML, CSS
-and JavaScript with no build step.
+The panel is a Svelte 4 application built on the [monos-ui](https://github.com/aa-blinov/monos-ui) 2.1.0 kit (commit `78158dc`).
+Build it with `cd frontend && npm install && npm run build`; the built page lands in `src/llm_hub/static/app/`.
+The kit is vendored in `frontend/vendor/monos-ui/`; its tokens and themes apply through `data-mode` on the root element.
 
-The panel's own rules read the kit's tokens through a short alias block at the top of `index.html`
-(`--ground`, `--ink`, `--hair`, `--action`, `--s-1`…`--s-8`, `--r-btn`). Change a colour in the kit and the panel follows.
+The panel's own layout rules read the kit's tokens directly (`--ui-bg`, `--ui-line`, `--ui-radius`, `--ui-space-*`);
+change a colour in the kit and the panel follows.
 
 ## Overview
 

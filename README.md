@@ -54,7 +54,7 @@ uv pip install --python .venv/bin/python -e '.[dev]'
 Layout:
 
 - `src/llm_hub/` — backend: configuration, engines, process supervisor, downloads, memory check, HTTP API.
-- `src/llm_hub/static/` — interface: one HTML file and one script, no build step.
+- `frontend/` — interface (Svelte 4 on the monos-ui kit). Build it with `cd frontend && npm install && npm run build`; the built page lands in `src/llm_hub/static/app/`.
 - `config/registry.json` — engines, models and presets.
 - `scripts/` — installation, launchd agent, launcher.
 

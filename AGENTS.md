@@ -9,7 +9,7 @@ uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e .
 .venv/bin/python -m llm_hub                   # panel, port from config/registry.json (8765)
 .venv/bin/python -m pytest tests              # tests, no network and no models
 .venv/bin/python -m py_compile src/llm_hub/*.py
-node --check src/llm_hub/static/app.js        # interface syntax
+cd frontend && npm install && npm run build  # build the interface into static/app/
 bash -n scripts/bootstrap.sh
 ```
 
@@ -37,7 +37,7 @@ bash -n scripts/bootstrap.sh
 - Restarting the panel from its own request cuts off that request. For autostart, only the agent file is written.
 - Emoji are not used in project files.
 - `static/monos/` and `static/fonts/` are copied from aa-blinov/monos-ui (MIT / SIL OFL). Do not edit them by hand; take a newer copy from the kit instead.
-- The panel is plain HTML, CSS and JavaScript. Do not add a framework or a build step without a decision in DESIGN.md.
+- The panel is built with `cd frontend && npm install && npm run build` (Svelte 4 on the monos-ui kit). Do not add another framework without a decision in DESIGN.md.
 
 ## Working rules
 

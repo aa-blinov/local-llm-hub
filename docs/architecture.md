@@ -22,7 +22,7 @@ The application has three layers: a FastAPI backend, an interface made of one HT
 
 ## Interface
 
-One HTML file and one JavaScript file, with no build step. The styles are the plain-CSS token files of the monos-ui kit in `static/monos/` (copied, not built) and the font is in `static/fonts/`; the panel uses no framework. Data is refreshed by polling the API. The DOM is written only when the content changes, so the update does not flicker.
+A Svelte 4 application built on the monos-ui kit. Build it with `cd frontend && npm install && npm run build`; the built page and its assets land in `static/app/`, which the panel serves at `/`. The styles come from the kit (tokens, themes, fonts); the fonts also stay in `static/fonts/`. Data is refreshed by polling the API; all network calls live in `frontend/src/api.js`.
 
 ## External data
 

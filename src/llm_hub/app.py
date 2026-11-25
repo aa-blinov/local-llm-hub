@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -16,7 +16,8 @@ from .opencode import sync_config, status_config
 from .preflight import BUDGET_SHARE, context_need_gib, estimate, recommend_context
 from .supervisor import Supervisor, history_tail
 
-STATIC = Path(__file__).parent / "static"
+STATIC = Path(__file__).parent / "static"           # fonts and the monos-ui kit css
+APP_DIR = STATIC / "app"                            # the built panel
 
 
 def _home_short(p) -> str:
@@ -118,6 +119,9 @@ def create_app() -> FastAPI:
 
     app = FastAPI(title="Local LLM Hub", lifespan=lifespan)
     app.state.supervisor = sup
+    # The built panel is served first; the older /static mount keeps the fonts
+    # and the monos files.
+    app.mount("/static/app", StaticFiles(directory=APP_DIR), name="app")
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     def model_or_404(key: str):
@@ -127,12 +131,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def index():
-        # Script version = its modification time, so the browser never serves an old copy.
-        import re
-        html = (STATIC / "index.html").read_text(encoding="utf-8")
-        ver = int((STATIC / "app.js").stat().st_mtime)
-        html = re.sub(r"/static/app\.js\?v=\d+", f"/static/app.js?v={ver}", html)
-        return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+        return FileResponse(APP_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/api/recommend")
     def recommend_model(purpose: str = "code"):

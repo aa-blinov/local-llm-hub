@@ -1,4 +1,155 @@
+/* The kit's own styles first (fonts, tokens, themes, base), then Tailwind. */
 @import '../vendor/monos-ui/src/styles/index.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* The panel's own rules: layout, reserved row heights, the four steps.
+   Colours come from the kit's tokens; there are no panel-specific colours. */
+* { box-sizing: border-box; }
+html { scrollbar-gutter: stable; }
+html, body { height: 100%; margin: 0; background: var(--ui-bg); color: var(--ui-ink);
+  font: 400 16px/1.5 var(--ui-font); }
+body { overflow: hidden; }
+#app { display: flex; height: 100vh; }
+[hidden] { display: none !important; }
+
+/* Sidebar: fixed width, everything clipped so text changes do not move it. */
+.sidebar { width: 232px; flex: none; height: 100vh; position: sticky; top: 0;
+  background: var(--ui-bg); border-right: 1px solid var(--ui-line);
+  display: flex; flex-direction: column; gap: var(--ui-space-comfortable); padding: var(--ui-space-roomy) var(--ui-space-comfortable); }
+.brand { display: flex; align-items: center; flex: none; font-size: 18px; font-weight: 600; letter-spacing: -.01em;
+  min-height: 44px; padding: 0 var(--ui-space-snug); }
+.tabs { display: flex; flex-direction: column; gap: var(--ui-space-tight); min-width: 0; }
+.tabs-pill { display: none; }
+.tabs .tab { display: flex; align-items: center; padding: 0 var(--ui-space-base); min-height: 44px; border-radius: var(--ui-radius);
+  color: var(--ui-ink-soft); text-decoration: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
+.tabs .tab:hover { color: var(--ui-ink); }
+.tabs .tab.on { background: var(--ui-surface); color: var(--ui-ink); font-weight: 600; }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; align-items: stretch; gap: var(--ui-space-comfortable); min-width: 0; }
+/* The bottom block shares one left edge: the mode, the status and the theme all start at the same column. */
+.runinfo { min-width: 0; padding: 0 var(--ui-space-snug); font-size: 14px; line-height: 1.4; color: var(--ui-ink-soft);
+  overflow-wrap: anywhere; }
+.runinfo:empty { display: none; }
+.state { display: inline-flex; align-items: center; gap: var(--ui-space-snug); font-size: 15px; color: var(--ui-ink-soft);
+  white-space: nowrap; overflow: hidden; padding: 0 var(--ui-space-snug); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ui-ink-soft); display: inline-block; flex: none; }
+.dot.ok-bg { background: var(--ui-success-text) !important; }
+.dot.wait-bg { background: var(--ui-warning-text) !important; }
+.dot.off-bg { background: var(--ui-danger-text) !important; }
+
+main { flex: 1; min-width: 0; height: 100vh; padding: var(--ui-space-comfortable); overflow: auto; }
+.view-simple { max-width: 800px; margin: 0 auto; }
+.view-panel { max-width: 1100px; display: block; }
+.view-components { display: flex; flex-direction: column; gap: var(--ui-space-comfortable); padding-bottom: var(--ui-space-section); }
+
+h2.panel-title { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 var(--ui-space-comfortable); }
+h2.panel-sub { margin-top: var(--ui-space-roomy); font-size: 18px; }
+
+/* Advanced view: quiet groups of cards on a single column */
+.sec { margin: 0 0 var(--ui-space-section); }
+.sec-title { margin: 0 0 var(--ui-space-base); font-size: 14px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--ui-ink-soft); }
+.launch-grid { display: grid; gap: var(--ui-space-comfortable); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.check { display: flex; align-items: center; font-size: 16px; color: var(--ui-ink); margin: var(--ui-space-base) 0 0; }
+
+/* Diagnostics: answer check, program log and history, collapsed by default */
+.diag { padding: 0; }
+.diag > summary { list-style: none; cursor: pointer; padding: var(--ui-space-comfortable) var(--ui-space-roomy); }
+.diag > summary::-webkit-details-marker { display: none; }
+.diag > summary h2 { margin: 0; }
+.diag[open] > summary { border-bottom: 1px solid var(--ui-line); }
+.diag-grid { display: grid; gap: var(--ui-space-comfortable); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: var(--ui-space-comfortable) var(--ui-space-roomy); }
+.logpanel { display: flex; flex-direction: column; }
+.logpanel pre { flex: 1; min-height: 0; }
+
+
+.row-actions { display: flex; gap: var(--ui-space-snug); align-items: center; flex-wrap: wrap; margin-top: var(--ui-space-base); }
+.actions { display: flex; gap: var(--ui-space-base); flex-wrap: wrap; margin-top: var(--ui-space-comfortable); }
+
+/* Simple view: four steps in one column */
+.steps { max-width: 800px; margin: 0 auto; display: grid; gap: var(--ui-space-roomy); padding: var(--ui-space-snug) 0 var(--ui-space-section); }
+.intro { color: var(--ui-ink-soft); margin: 0; font-size: 16px; max-width: 60ch; }
+.step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--ui-space-comfortable); align-items: start; }
+.num { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ui-line); display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 18px; background: var(--ui-bg); }
+.step.done .num { background: var(--ui-success-text); color: var(--ui-bg); border-color: var(--ui-success-text); }
+.step h3 { margin: 8px 0 var(--ui-space-tight); font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.explain { margin: 0 0 var(--ui-space-base); color: var(--ui-ink-soft); font-size: 15px; }
+.step.success .card { border-color: color-mix(in srgb, var(--ui-success-text) 40%, transparent); }
+.msg { margin-top: var(--ui-space-base); font-size: 15px; min-height: 2.8em; }
+
+/* Loader: label and percent above a thin kit Progress bar. */
+.loader { min-height: 60px; margin-bottom: var(--ui-space-snug); border: 1px solid var(--ui-line);
+  background: var(--ui-bg); border-radius: var(--ui-radius); padding: var(--ui-space-base) var(--ui-space-comfortable); }
+.ld-top { display: flex; justify-content: space-between; gap: var(--ui-space-comfortable); font-size: 14px; color: var(--ui-ink); margin-bottom: var(--ui-space-snug); }
+.ld-pct { color: var(--ui-ink-soft); font-variant-numeric: tabular-nums; }
+
+.hint { font-size: 14px; color: var(--ui-ink-soft); margin: var(--ui-space-snug) 0 0; }
+.hint.bad { color: var(--ui-danger-text); }
+.hint.warn { color: var(--ui-warning-text); }
+.muted { color: var(--ui-ink-soft); font-size: 14px; }
+.good { color: var(--ui-success-text); }
+.lbl { display: block; font-size: 14px; color: var(--ui-ink-soft); margin: var(--ui-space-base) 0 var(--ui-space-tight); }
+.lbl.first { margin-top: 0; }
+
+/* Status and memory rows keep their height while values change. */
+.rows .row { min-height: 2.4em; display: flex; justify-content: space-between; align-items: baseline; gap: var(--ui-space-comfortable); padding: var(--ui-space-snug) 0; border-bottom: 1px solid var(--ui-line); font-size: 15px; }
+.rows .row:last-child { border-bottom: 0; }
+.rows .row span:first-child { color: var(--ui-ink-soft); }
+.rows .row span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+
+.hist-row { padding: var(--ui-space-snug) 0; border-bottom: 1px solid var(--ui-line); font-size: 14px; }
+.hist-row .t { color: var(--ui-ink-soft); font-variant-numeric: tabular-nums; }
+
+pre { margin: 0; overflow: auto; white-space: pre-wrap; font: 14px/1.6 ui-monospace, Menlo, monospace; background: var(--ui-bg); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); padding: var(--ui-space-comfortable); }
+pre.code { white-space: pre; background: var(--ui-bg); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); padding: var(--ui-space-base) var(--ui-space-comfortable); font-size: 14px; }
+
+.answer { min-height: 96px; margin-top: var(--ui-space-base); font-size: 16px; line-height: 1.6; }
+.answer p { margin: 0 0 var(--ui-space-base); }
+.answer h4 { margin: var(--ui-space-comfortable) 0 var(--ui-space-snug); font-size: 17px; font-weight: 600; }
+.answer li { margin-left: var(--ui-space-roomy); }
+
+/* Models and programs: one row per component. */
+.comp { min-height: 64px; display: grid; grid-template-columns: minmax(0, 1fr) 110px 150px 200px; gap: var(--ui-space-comfortable); align-items: center; padding: var(--ui-space-base) 0; border-bottom: 1px solid var(--ui-line); }
+.comp:last-child { border-bottom: 0; }
+.comp .name { font-weight: 500; }
+.comp .sub { font-size: 14px; color: var(--ui-ink-soft); }
+.comp .size { font-variant-numeric: tabular-nums; text-align: right; color: var(--ui-ink-soft); font-size: 14px; }
+.comp .btns { display: flex; gap: var(--ui-space-snug); justify-content: flex-end; }
+.comp-slim { grid-template-columns: minmax(0, 1fr) auto; }
+
+@media (max-width: 1100px) {
+  body { overflow: auto; }
+  main { height: auto; }
+  .launch-grid { grid-template-columns: minmax(0, 1fr); }
+  .diag-grid { grid-template-columns: minmax(0, 1fr); }
+  .step { grid-template-columns: 1fr; }
+  .comp { grid-template-columns: 1fr; }
+  .comp .btns { justify-content: flex-start; }
+}
+
+.side-theme { width: 100%; text-align: left; }
+
+/* Narrow widths: the sidebar becomes the top bar. */
+@media (max-width: 900px) {
+  #app { flex-direction: column; height: auto; }
+  .sidebar { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center;
+    border-right: 0; border-bottom: 1px solid var(--ui-line); padding: var(--ui-space-snug) var(--ui-space-base); gap: var(--ui-space-snug); }
+  .brand { min-height: 44px; padding: 0 var(--ui-space-tight); }
+  .tabs { display: none; }
+  .tabs-pill { display: block; }
+  .tabs { flex-direction: row; gap: 0; }
+  .side-foot { margin-top: 0; flex-direction: row; flex-wrap: nowrap; align-items: center; width: 100%; }
+  .side-foot .side-theme { width: auto; flex: none; }
+  main { height: auto; }
+}
+@media (max-width: 640px) {
+  .brand { white-space: nowrap; font-size: 14px; }
+  .tabs .tab { padding: 0 var(--ui-space-snug); min-height: 44px; font-size: 14px; }
+  .side-foot { gap: var(--ui-space-snug); }
+  .runinfo { flex: 1 1 auto; order: 1; }
+  .side-theme { order: 2; }
+  .state { order: 3; font-size: 14px; flex: 1 1 100%; width: 100%; min-width: 0; padding: 0; white-space: normal; }
+  main { padding: var(--ui-space-comfortable); }
+}
