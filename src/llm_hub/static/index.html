@@ -21,7 +21,7 @@
     /* Tokens come from the monos-ui kit (tokens.css, themes.css). These names keep the panel's rules readable. */
     :root {
       --on-ok: var(--ui-bg);
-      --ground: var(--ui-bg); --panel: var(--ui-bg); --ink: var(--ui-ink); --muted: var(--ui-ink-soft);
+      --ground: var(--ui-bg); --panel: var(--ui-surface); --ink: var(--ui-ink); --muted: var(--ui-ink-soft);
       --hair: var(--ui-line); --action: var(--ui-accent); --on-action: var(--ui-bg);
       --ok: var(--ui-success-text); --wait: var(--ui-warning-text); --off: var(--ui-danger-text);
       --r-lg: var(--ui-radius); --r-sm: var(--ui-radius); --r-btn: var(--ui-radius);
@@ -119,12 +119,27 @@
     .hist-row .t { color: var(--muted); font-variant-numeric: tabular-nums; }
 
     label { display: block; font-size: 14px; color: var(--muted); margin: var(--s-3) 0 var(--s-1); }
-    select, input[type=number], input[type=text], input[type=password], textarea { width: 100%; min-height: 44px; background: var(--ground); color: var(--ink);
-      border: 1px solid var(--hair); border-radius: var(--r-sm); padding: var(--s-2) var(--s-4); font-family: inherit; font-size: 16px; line-height: 1.4; }
-    textarea { min-height: 96px; resize: vertical; }
-    ::placeholder { color: var(--muted); opacity: 1; }  /* 4.5:1 or better in both themes */
+    /* Fields follow the monos-ui kit: text fields are underlines, a select is a boxed trigger, one 6px radius. */
+    input[type=number], input[type=text], input[type=password], textarea {
+      width: 100%; min-height: 44px; background: transparent; color: var(--ink); border: 0;
+      border-bottom: 1px solid var(--ui-line); border-radius: 0; padding: var(--s-2) var(--s-1);
+      font: inherit; font-size: 16px; line-height: 1.4; outline: none; }
+    input[type=number]:focus, input[type=text]:focus, input[type=password]:focus, textarea:focus { border-bottom-color: var(--ui-ink-soft); }
+    textarea { min-height: 96px; resize: vertical; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); padding: var(--s-2) var(--s-3); }
+    select { appearance: none; -webkit-appearance: none; width: 100%; min-height: 44px; padding: 0 var(--s-8) 0 var(--s-3);
+      background: var(--ui-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%236a5e55' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right var(--s-3) center;
+      color: var(--ink); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); font: inherit; font-size: 15px; cursor: pointer; }
+    select:hover { border-color: var(--ui-line-strong); }
+    select:focus { border-color: var(--ui-ink-soft); outline: none; }
+    select:disabled { opacity: .5; cursor: not-allowed; }
+    ::placeholder { color: var(--ui-ink-faint); opacity: 1; }
     select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
-    input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--action); vertical-align: -4px; margin-right: var(--s-2); }
+    input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; margin: 0 var(--s-2) 0 0; flex: none;
+      border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-bg); display: inline-grid; place-content: center; cursor: pointer; vertical-align: -3px; }
+    input[type=checkbox]:hover { border-color: var(--ui-line-strong); }
+    input[type=checkbox]:checked { background: var(--ui-ink); border-color: var(--ui-ink); }
+    input[type=checkbox]::before { content: ""; width: 8px; height: 8px; background: var(--ui-bg); transform: scale(0); transition: transform .15s; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
+    input[type=checkbox]:checked::before { transform: scale(1); }
     .check { display: flex; align-items: center; font-size: 16px; color: var(--ink); margin: var(--s-3) 0 0; }
     .hint { font-size: 14px; color: var(--muted); margin: var(--s-2) 0 0; min-height: 1.2em; }
     .verdict { font-size: 15px; margin-top: var(--s-3); padding: var(--s-3) var(--s-4); border: 1px solid var(--hair); border-radius: var(--r-sm); min-height: 4.4em; }
@@ -150,8 +165,8 @@
     .loader { min-height: 60px; margin-bottom: var(--s-2); }
     .ld-top { display: flex; justify-content: space-between; gap: var(--s-4); font-size: 14px; color: var(--ink); margin-bottom: var(--s-2); }
     .ld-top .ld-pct { color: var(--muted); font-variant-numeric: tabular-nums; }
-    .ld-track { position: relative; height: 4px; border-radius: 999px; background: var(--hair); overflow: hidden; }
-    .ld-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; border-radius: 999px; background: var(--action); transform: scaleX(0); transform-origin: left center; transition: transform .4s ease; }
+    .ld-track { position: relative; height: 6px; border-radius: var(--ui-radius); background: var(--ui-surface-2); overflow: hidden; }
+    .ld-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; border-radius: var(--ui-radius); background: var(--ui-accent); transform: scaleX(0); transform-origin: left center; transition: transform .4s ease; }
     .loader.indet .ld-fill { transform: scaleX(.32); transition: none; animation: ld-slide 1.3s cubic-bezier(.45,0,.55,1) infinite; }
     .loader.done .ld-fill { transform: scaleX(1); background: var(--ok); }
     @keyframes ld-slide { 0% { transform: translateX(-100%) scaleX(.32); } 100% { transform: translateX(312%) scaleX(.32); } }
