@@ -16,8 +16,13 @@
       "binary": "./.venv/bin/mlx_vlm.server",
       "ctx_choices": [
         32768,
+        49152,
         65536,
+        98304,
         131072,
+        163840,
+        184320,
+        229376,
         262144
       ],
       "prefill_choices": [
