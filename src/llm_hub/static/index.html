@@ -24,7 +24,6 @@
       --ok: #2f6b4f; --wait: #8a5a12; --off: #9b2c2c;
       --r-lg: 12px; --r-sm: 8px; --r-btn: 8px;
       --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
-      --nav: 64px;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -48,34 +47,38 @@
     [hidden] { display: none !important; }
     html[data-view="panel"] #view-simple, html[data-view="panel"] #view-components,
     html[data-view="components"] #view-simple, html[data-view="components"] #view-panel { display: none !important; }
-    html[data-view="panel"] #view-panel { display: grid !important; }
+    html[data-view="panel"] #view-panel { display: block !important; }
     html[data-view="components"] #view-components { display: flex !important; }
     html { scrollbar-gutter: stable; }
     html, body { height: 100%; margin: 0; background: var(--ground); color: var(--ink);
       font: 400 16px/1.5 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif; }
-    body { overflow: hidden; }
+    body { overflow: hidden; display: flex; }
 
-    /* Top bar: fixed height, everything clipped or centered so text changes do not move it. */
-    .topbar { height: var(--nav); background: var(--ground); border-bottom: 1px solid var(--hair);
-      display: flex; align-items: stretch; gap: var(--s-3); padding: 0 var(--s-6); }
-    .brand { display: flex; align-items: center; flex: none; font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
-    .tabs { display: flex; gap: var(--s-1); margin-left: var(--s-2); }
-    .tab { display: inline-flex; align-items: center; padding: 0 var(--s-4); min-height: 44px; border-radius: var(--r-btn);
-      border-bottom: 2px solid transparent; color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; }
-    .tab.on { color: var(--ink); font-weight: 600; border-bottom-color: var(--action); }
-    .runinfo { margin-left: auto; align-self: center; min-width: 0; flex: 0 1 300px; height: 30px; line-height: 28px;
+    /* Sidebar: fixed width, everything clipped so text changes do not move it. */
+    .sidebar { width: 232px; flex: none; height: 100vh; position: sticky; top: 0;
+      background: var(--ground); border-right: 1px solid var(--hair);
+      display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-6) var(--s-4); }
+    .brand { display: flex; align-items: center; flex: none; font-size: 18px; font-weight: 600; letter-spacing: -.01em;
+      min-height: 44px; padding: 0 var(--s-2); }
+    .tabs { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+    .tab { display: flex; align-items: center; padding: 0 var(--s-3); min-height: 44px; border-radius: var(--r-btn);
+      color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
+    .tab.on { background: var(--panel); color: var(--ink); font-weight: 600; }
+    .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
+    .runinfo { min-width: 0; height: 30px; line-height: 28px;
       font-size: 14px; color: var(--muted); padding: 0 var(--s-3); border: 1px solid var(--hair); border-radius: 999px;
       text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .runinfo:empty { border-color: transparent; }
-    #theme { align-self: center; }
-    .state { display: inline-flex; align-items: center; gap: var(--s-2); font-size: 15px; color: var(--muted); white-space: nowrap; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; }
+    #theme { width: 100%; }
+    .state { display: inline-flex; align-items: center; gap: var(--s-2); font-size: 15px; color: var(--muted);
+      white-space: nowrap; overflow: hidden; padding: 0 var(--s-2); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; flex: none; }
     .ok-bg { background: var(--ok) !important; } .wait-bg { background: var(--wait) !important; } .off-bg { background: var(--off) !important; }
 
     .panel { background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: var(--s-4) var(--s-6); min-height: 0; overflow: auto; }
     .panel h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 var(--s-4); }
     .panel h2.sub { margin-top: var(--s-6); font-size: 18px; }
-    main { height: calc(100vh - var(--nav)); padding: var(--s-4); overflow: auto; }
+    main { flex: 1; min-width: 0; height: 100vh; padding: var(--s-4); overflow: auto; }
 
     /* Simple view: four steps in one column */
     #view-simple { height: 100%; overflow: auto; }
@@ -98,14 +101,16 @@
     .muted { color: var(--muted); font-size: 14px; }
     .good { color: var(--ok); } .warn { color: var(--wait); } .bad { color: var(--off); }
 
-    /* Advanced view */
-    #view-panel { display: grid; gap: var(--s-4); grid-template-columns: 360px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: auto auto auto; }
+    /* Advanced view: three quiet groups of cards on a single column */
+    #view-panel { display: block; max-width: 1100px; }
+    #view-panel .panel { overflow: visible; }
+    .sec { margin: 0 0 var(--s-8); }
+    .sec-title { margin: 0 0 var(--s-3); font-size: 14px; font-weight: 600; letter-spacing: .04em;
+      text-transform: uppercase; color: var(--muted); }
+    .launch-grid { display: grid; gap: var(--s-4); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
     #launch, #state-panel { overflow: visible; }
-    #state-panel { align-self: start; }
-    #settings-panel { grid-column: 1 / -1; }
-    #view-panel > * { min-width: 0; }
     /* Diagnostics: answer check, program log and history, collapsed by default */
-    #diag { grid-column: 1 / -1; padding: 0; }
+    #diag { padding: 0; }
     #diag > summary { list-style: none; cursor: pointer; padding: var(--s-4) var(--s-5); }
     #diag > summary::-webkit-details-marker { display: none; }
     #diag > summary h2 { margin: 0; }
@@ -179,22 +184,33 @@
     @media (max-width: 1100px) {
       body { overflow: auto; }
       main { height: auto; }
-      #view-panel { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+      .launch-grid { grid-template-columns: minmax(0, 1fr); }
       .diag-grid { grid-template-columns: minmax(0, 1fr); padding: var(--s-4); }
       .step { grid-template-columns: 1fr; }
       .comp { grid-template-columns: 1fr; }
       .comp .btns { justify-content: flex-start; }
     }
+    /* Narrow widths: the sidebar becomes the top bar it is now. */
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .sidebar { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center;
+        border-right: 0; border-bottom: 1px solid var(--hair); padding: var(--s-2) var(--s-3); gap: var(--s-2); }
+      .brand { min-height: 44px; padding: 0 var(--s-1); }
+      .tabs { flex-direction: row; gap: 0; }
+      .side-foot { margin-top: 0; flex-direction: row; flex-wrap: nowrap; align-items: center; width: 100%; }
+      #theme { width: auto; flex: none; }
+      main { height: auto; }
+    }
     @media (max-width: 640px) {
-      .topbar { height: auto; min-height: 56px; flex-wrap: wrap; align-items: center; padding: var(--s-2) var(--s-3); gap: var(--s-2); }
       .brand { white-space: nowrap; font-size: 14px; }
-      .topbar .tab { padding: 0 var(--s-2); min-height: 44px; font-size: 14px; }
+      .sidebar .tab { padding: 0 var(--s-2); min-height: 44px; font-size: 14px; }
       #theme { min-height: 44px; padding: 0 var(--s-2); font-size: 14px; }
-      .tabs { margin-left: 0; gap: 0; min-width: 0; }
       .tab { white-space: nowrap; }
-      .runinfo { flex: 1 1 100%; margin-left: 0; min-width: 0; }
+      .side-foot { gap: var(--s-2); }
+      .runinfo { flex: 1 1 auto; order: 1; }
       .runinfo:empty { display: none; }
-      .state { font-size: 14px; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+      #theme { order: 2; }
+      .state { order: 3; font-size: 14px; flex: 1 1 auto; min-width: 0; white-space: normal; }
       .lbl-long { display: none; }
       .lbl-short { display: inline; }
       main { padding: var(--s-4); }
@@ -204,17 +220,19 @@
   </style>
 </head>
 <body>
-<header class="topbar">
+<aside class="sidebar">
   <span class="brand">Local LLM Hub</span>
   <nav class="tabs" aria-label="Sections">
     <a href="#simple" id="tab-simple" class="tab">Simple</a>
     <a href="#panel" id="tab-panel" class="tab">Settings</a>
     <a href="#components" id="tab-components" class="tab"><span class="lbl-long">Programs and models</span><span class="lbl-short">Models</span></a>
   </nav>
-  <span class="runinfo" id="runinfo"></span>
-  <button id="theme" class="small" title="Light or dark theme">Theme: auto</button>
-  <span class="state"><span class="dot" id="dot"></span><span id="state">—</span></span>
-</header>
+  <div class="side-foot">
+    <span class="runinfo" id="runinfo"></span>
+    <span class="state"><span class="dot" id="dot"></span><span id="state">—</span></span>
+    <button id="theme" class="small" title="Light or dark theme">Theme: auto</button>
+  </div>
+</aside>
 
 <main>
   <!-- ===== Simple view: four steps ===== -->
@@ -307,6 +325,9 @@
 
   <!-- ===== Settings view ===== -->
   <div id="view-panel" hidden>
+    <section class="sec">
+      <h2 class="sec-title">Launch and status</h2>
+      <div class="launch-grid">
     <section class="panel" id="launch">
       <h2>Launch</h2>
       <label for="preset">Mode</label><p class="hint">A ready-made set: Chat for questions, Coding for programs.</p>
@@ -353,7 +374,11 @@
       </div>
       <p class="hint" id="ocmsg" style="min-height:2.6em"></p>
     </section>
+      </div>
+    </section>
 
+    <section class="sec">
+      <h2 class="sec-title">Diagnostics</h2>
     <details class="panel" id="diag">
       <summary><h2>Diagnostics: answer check, program log, history</h2></summary>
       <div class="diag-grid">
@@ -379,9 +404,11 @@
     </section>
       </div>
     </details>
+    </section>
 
+    <section class="sec">
+      <h2 class="sec-title">General settings</h2>
     <section class="panel" id="settings-panel">
-      <h2>General settings</h2>
       <label class="check"><input type="checkbox" id="st-autostart">Start the panel at login</label>
       <p class="hint">The assistant starts by itself after a restart. Turn it off if you do not need that.</p>
       <label for="st-view">Section to open first</label>
@@ -399,6 +426,7 @@
       <input id="st-swap" type="number" min="1" max="64" step="1">
       <div class="row-actions"><button id="st-save" class="small">Save settings</button></div>
       <p class="hint" id="st-msg"></p>
+    </section>
     </section>
   </div>
 
