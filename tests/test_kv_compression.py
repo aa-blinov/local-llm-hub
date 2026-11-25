@@ -13,6 +13,8 @@ GIB = 2 ** 30
 def ornith_like(monkeypatch):
     monkeypatch.setattr(preflight, "_weights_bytes", lambda m: 18 * GIB)
     monkeypatch.setattr(preflight, "_kv_bytes_per_token", lambda m: 20 * 1024)
+    # vm_stat exists only on macOS; the tests must not depend on the machine's memory state.
+    monkeypatch.setattr(preflight, "_vm", lambda: {"free_gib": 29.0, "inactive_gib": 0.0, "swap_used_gib": 0.0})
     return SimpleNamespace(key="ornith-4bit")
 
 
