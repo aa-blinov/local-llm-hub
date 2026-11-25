@@ -22,7 +22,8 @@
   $: showMlx = a.engine === 'mlx';
   $: modelCase = c && c.models ? c.models[a.model] : null;
 
-  $: statusRows = $status ? deriveStatusRows($status) : [];
+  // Reads the catalog reactively: the status can arrive before the catalog does.
+  $: statusRows = $status ? deriveStatusRows($status, $catalog) : [];
   $: memoryRows = $status ? deriveMemoryRows($status) : [];
   $: loadErrText = $status && $status.load_error ? 'Loading error: ' + friendly($status.load_error) : '';
   $: memWarnText = $status && $status.memory && $status.memory.swap_used_gib != null

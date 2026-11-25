@@ -495,8 +495,7 @@ export async function refreshStatus() {
   }
 }
 
-export function deriveStatusRows(s) {
-  const c = get(catalog);
+export function deriveStatusRows(s, c = get(catalog)) {
   return [
     ['Program', s.running && c ? c.engines[s.engine].label : '—'],
     ['Model', s.model_label || '—'],
