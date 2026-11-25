@@ -1,6 +1,6 @@
 # Screenshots
 
-This folder holds the interface screenshots that the README links to. Screenshots are taken in the light theme at 1280 px width, from the monos-ui palette shipped with the panel.
+This folder holds the interface screenshots that the README links to. Screenshots are taken in the Catppuccin light theme at 1280 px width, from the monos-ui palette shipped with the panel.
 
 Expected files:
 

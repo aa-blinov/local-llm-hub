@@ -1,16 +1,16 @@
 ---
 name: Local LLM Hub
-description: A quiet control panel for local models, built on the monos-ui kit: warm paper, one 6px radius, text buttons, Gruvbox in light and dark.
+description: A quiet control panel for local models, built on the monos-ui kit: Catppuccin in light and dark, one 6px radius, text buttons.
 colors:
-  ground: "#fbf1c7"
-  surface: "#ebdbb2"
-  ink: "#3c3836"
-  ink-soft: "#6a5e55"
-  line: "#d5c4a1"
-  accent: "#458588"
-  success: "#646411"
-  warning: "#a1460b"
-  danger: "#bc211b"
+  ground: "#eff1f5"
+  surface: "#e6e9ef"
+  ink: "#4c4f69"
+  ink-soft: "#5c5f71"
+  line: "#ccd0da"
+  accent: "#1e66f5"
+  success: "#307820"
+  warning: "#b24608"
+  danger: "#d00f38"
 ---
 
 # Local LLM Hub: design system
@@ -33,15 +33,18 @@ Actions are words, not boxes. Statuses use colour with text next to them. There 
 
 The panel offers two modes, light and dark, and follows the system when the choice is "auto". The header button cycles
 auto, dark, light and shows the current choice. Modes are set with `data-mode` on the root element. The kit also ships
-five other palettes (GitHub, Dracula, Nord, Solarized, Catppuccin) selected with `data-theme`; the panel does not expose
-them.
+other palettes (Gruvbox, GitHub, Dracula, Nord, Solarized) selected with `data-theme`; the panel uses Catppuccin.
 
-Gruvbox light (`data-mode="light"`, the default): ground `#fbf1c7`, surface `#ebdbb2`, ink `#3c3836`, soft ink
-`#6a5e55`, line `#d5c4a1`, accent `#458588`.
+The panel uses the kit's Catppuccin palette (`data-theme="catppuccin"`). Light and dark follow the theme button.
 
-Gruvbox dark (`data-mode="dark"`): ground `#282828`, surface `#3c3836`, ink `#ebdbb2`, soft ink `#b1a491`.
+Catppuccin light (`data-mode="light"`, the default): ground `#eff1f5`, surface `#e6e9ef`, ink `#4c4f69`, soft ink
+`#5c5f71`, line `#ccd0da`, accent `#1e66f5`.
 
-Contrast: body ink is at least 7:1 on the ground in both modes; secondary text is at least 4.5:1.
+Catppuccin dark (`data-mode="dark"`): ground `#1e1e2e`, surface `#181825`, ink `#cdd6f4`, soft ink `#9ba0b7`, line
+`#313244`, accent `#89b4fa`.
+
+Contrast: body ink is at least 7:1 on the ground in both modes; secondary text is at least 4.5:1. Check the pairs with the
+numbers in the kit before changing a colour.
 
 ## Typography
 
