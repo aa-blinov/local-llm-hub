@@ -36,6 +36,8 @@ bash -n scripts/bootstrap.sh
 - Updating the interface must not move elements: block heights are set in advance.
 - Restarting the panel from its own request cuts off that request. For autostart, only the agent file is written.
 - Emoji are not used in project files.
+- `static/monos/` and `static/fonts/` are copied from aa-blinov/monos-ui (MIT / SIL OFL). Do not edit them by hand; take a newer copy from the kit instead.
+- The panel is plain HTML, CSS and JavaScript. Do not add a framework or a build step without a decision in DESIGN.md.
 
 ## Working rules
 
