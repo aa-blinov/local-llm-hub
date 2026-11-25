@@ -104,18 +104,29 @@ def overhead_for(model, ctx: int) -> float:
     return overhead_gib(ctx)
 
 
-def context_need_gib(model: Model, ctx: int, apc_gib: float = 0.0) -> float | None:
+def kv_scale(kv_bits: int | None) -> float:
+    """Size of the KV cache relative to fp16 when it is quantized to `kv_bits`.
+
+    Each group of 64 values also stores a 16-bit scale and a 16-bit bias, i.e. half a bit per value.
+    Without quantization the factor is 1.
+    """
+    if not kv_bits:
+        return 1.0
+    return (kv_bits + 0.5) / 16
+
+
+def context_need_gib(model: Model, ctx: int, apc_gib: float = 0.0, kv_bits: int | None = None) -> float | None:
     """Memory needed to run `model` at `ctx` tokens: weights + KV cache + overhead + prefix cache."""
     weights = _weights_bytes(model)
     if weights is None:
         return None
     kv_tok = _kv_bytes_per_token(model)
-    kv = (kv_tok * ctx / GIB) if kv_tok else 0.0
+    kv = (kv_tok * ctx / GIB * kv_scale(kv_bits)) if kv_tok else 0.0
     return weights / GIB + kv + overhead_for(model, ctx) + apc_gib
 
 
 def recommend_context(model: Model, choices: list[int], total_gib: float, share: float = BUDGET_SHARE,
-                      apc_gib: float = 0.0) -> dict:
+                      apc_gib: float = 0.0, kv_bits: int | None = None) -> dict:
     """Largest context from `choices` whose weights + KV cache + overhead + prefix cache fit in `share` of total memory.
 
     Uses total memory, not the currently free memory, so the advice is about the hardware, not the moment.
@@ -129,7 +140,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
     budget = total_gib * share
     options = []
     for ctx in sorted(choices, reverse=True):
-        need = context_need_gib(model, ctx, apc_gib)
+        need = context_need_gib(model, ctx, apc_gib, kv_bits)
         options.append({"ctx": ctx, "need_gib": round(need, 1), "fits": need <= budget})
     fitting = [o["ctx"] for o in options if o["fits"]]
     best = max(fitting) if fitting else min(choices)
@@ -141,7 +152,7 @@ def recommend_context(model: Model, choices: list[int], total_gib: float, share:
             "total_gib": round(total_gib, 1), "options": options, "message": message}
 
 
-def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
+def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0, kv_bits: int | None = None) -> dict:
     """reclaim_gib: memory freed if the current run of this same model is stopped."""
     weights = _weights_bytes(model)
     kv_tok = _kv_bytes_per_token(model)
@@ -166,7 +177,7 @@ def estimate(model: Model, ctx: int, reclaim_gib: float = 0.0) -> dict:
         result["message"] = "KV cache not estimated (no config.json); estimate uses weights only"
         result["verdict"] = "ok" if result["total_gib"] < available * 0.8 else "risk"
         return result
-    kv = kv_tok * ctx / GIB
+    kv = kv_tok * ctx / GIB * kv_scale(kv_bits)
     total = weights / GIB + kv + overhead_for(model, ctx)
     result.update({"kv_gib": round(kv, 2), "total_gib": round(total, 2)})
     if total > available:

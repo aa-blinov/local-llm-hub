@@ -91,6 +91,7 @@ function fillCatalog(c) {
   $("model").onchange = () => { ctxTouched = false; fillCtx(); refreshPreflight(); updateDownload(); };
   $("ctx").onchange = () => { ctxTouched = true; refreshPreflight(); };
   $("prefill").onchange = refreshPreflight;
+  $("kvbits").onchange = refreshPreflight;
   pre.onchange = applyPreset;
   $("start").onclick = startAdvanced;
   $("stop").onclick = stopEngine;
@@ -179,7 +180,7 @@ async function refreshCtxAdvice() {
   const key = $("model").value;
   const box = $("ctx-advice");
   if (!key || $("engine").value !== "mlx") { box.textContent = ""; return; }
-  const a = await api(`/api/context-advice?model=${encodeURIComponent(key)}`);
+  const a = await api(`/api/context-advice?model=${encodeURIComponent(key)}${kvQuery()}`);
   if (!a || !a.ok) { box.textContent = (a && a.message) || ""; return; }
   box.textContent = `${a.message} Reading step ${a.prefill}, prefix cache ${a.apc_mem_gb} GB.`;
   if (!ctxTouched && a.ctx) { $("ctx").value = String(a.ctx); refreshPreflight(); }
@@ -226,13 +227,18 @@ function updateDownload() {
 }
 
 // ---- memory check ----
+// The KV compression choice changes the memory estimate, so the checks send it too (MLX only).
+function kvQuery() {
+  const k = $("kvbits");
+  return k && k.value && $("engine").value === "mlx" ? `&kv_bits=${k.value}` : "";
+}
 function refreshPreflight() {
   clearTimeout(preflightTimer);
   preflightTimer = setTimeout(async () => {
     const model = $("model").value;
     const ctx = $("ctx").value;
     if (model && ctx) {
-      const v = await api(`/api/preflight?model=${encodeURIComponent(model)}&ctx=${ctx}`);
+      const v = await api(`/api/preflight?model=${encodeURIComponent(model)}&ctx=${ctx}${kvQuery()}`);
       const el = $("verdict");
       el.className = "verdict " + ({ ok: "good", tight: "warn", risk: "bad" }[v.verdict] || "");
       el.textContent = v.verdict === "unknown" ? (v.message || "Memory check is not available") : v.message;
@@ -349,6 +355,7 @@ async function startAdvanced() {
     body.prefill = +$("prefill").value;
     body.apc = $("apc").checked;
     body.apc_mem_gb = +$("apcmem").value;
+    if ($("kvbits").value) body.kv_bits = +$("kvbits").value;
   }
   const r = await api("/api/start", body);
   $("actmsg").textContent = r.ok ? "The assistant is starting. The model loads in 1–2 minutes." : friendly(r.error);

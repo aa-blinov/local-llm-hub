@@ -33,6 +33,7 @@ class StartBody(BaseModel):
     apc: bool | None = None
     apc_mem_gb: float | None = None
     ngl: int | None = None
+    kv_bits: int | None = None  # 8 or 4: compress the KV cache (MLX only); None keeps full precision
 
 
 class ChatBody(BaseModel):
@@ -93,10 +94,11 @@ def create_app() -> FastAPI:
         apc_cap = 6.0 if total >= 48 else 2.0  # same cap the advice uses
         apc_gib = min(float(effective.get("apc_mem_gb", apc_cap)), apc_cap) if effective.get("apc", True) else 0.0
         ctx = int(effective["ctx"])
-        need = context_need_gib(m, ctx, apc_gib)
+        kv_bits = effective.get("kv_bits")
+        need = context_need_gib(m, ctx, apc_gib, kv_bits)
         if need is None or need <= total * BUDGET_SHARE:
             return opts, None
-        advice = recommend_context(m, reg.engines[m.engine].ctx_choices, total, apc_gib=apc_gib)
+        advice = recommend_context(m, reg.engines[m.engine].ctx_choices, total, apc_gib=apc_gib, kv_bits=kv_bits)
         if advice["fits"] and advice["ctx"] < ctx:
             out = {**opts, "ctx": advice["ctx"]}
             return out, (f"Context {ctx // 1024}k does not fit this Mac; "
@@ -162,6 +164,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/start")
     def start(body: StartBody):
+        if body.kv_bits not in (None, 4, 8):
+            return {"ok": False, "error": "KV cache compression must be off, 8-bit or 4-bit."}
         key, opts = body.model, {}
         if body.preset:
             pkey, popts = sup.preset_opts(body.preset)
@@ -183,7 +187,7 @@ def create_app() -> FastAPI:
         return sup.stop()
 
     @app.get("/api/context-advice")
-    def context_advice(model: str):
+    def context_advice(model: str, kv_bits: int | None = None):
         from .recommend import memory_gib
         m = model_or_404(model)
         total = memory_gib()
@@ -191,19 +195,19 @@ def create_app() -> FastAPI:
             return {"ok": False, "message": "Memory of this Mac could not be read."}
         choices = reg.engines[m.engine].ctx_choices
         apc_gib = 6.0 if total >= 48 else 2.0  # prefix-cache memory counts against the same budget
-        advice = recommend_context(m, choices, total, apc_gib=apc_gib)
+        advice = recommend_context(m, choices, total, apc_gib=apc_gib, kv_bits=kv_bits if kv_bits in (4, 8) else None)
         advice["apc_mem_gb"] = apc_gib
         advice["prefill"] = 512
         return advice
 
     @app.get("/api/preflight")
-    def preflight(model: str, ctx: int):
+    def preflight(model: str, ctx: int, kv_bits: int | None = None):
         m = model_or_404(model)
         reclaim = 0.0
         if sup.current is not None and sup.current.key == m.key and sup.status()["running"]:
-            base = estimate(m, ctx)
+            base = estimate(m, ctx, kv_bits=kv_bits)
             reclaim = base["weights_gib"] or 0.0
-        return estimate(m, ctx, reclaim_gib=reclaim)
+        return estimate(m, ctx, reclaim_gib=reclaim, kv_bits=kv_bits)
 
     @app.post("/api/download")
     def download(body: ModelBody):

@@ -355,6 +355,8 @@
         <label class="check"><input type="checkbox" id="apc">Cache the start of the conversation (APC)</label><p class="hint">Saves the start of the conversation to disk so it is not re-read for every question.</p>
         <label for="apcmem">Cache limit, GB</label>
         <input id="apcmem" type="number" min="1" max="20" step="1">
+        <label for="kvbits">Compress the conversation memory (KV cache)</label><p class="hint">Stores the conversation in fewer bits: less memory for long contexts, with some loss of quality. 8-bit is close to full precision; 4-bit saves more but can make answers worse.</p>
+        <select id="kvbits"><option value="">Off (full precision)</option><option value="8">8-bit</option><option value="4">4-bit</option></select>
       </div>
 
     </section>

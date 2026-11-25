@@ -66,6 +66,9 @@ class MLXAdapter(Adapter):
             "--max-kv-size", str(opts["ctx"]), "--max-num-seqs", "1",
             "--prefill-step-size", str(opts.get("prefill", 512)),
         ]
+        if opts.get("kv_bits"):
+            # Quantize the KV cache: 8 or 4 bits. Short conversations stay in full precision (server default).
+            argv += ["--kv-bits", str(int(opts["kv_bits"]))]
         return argv, env
 
 
