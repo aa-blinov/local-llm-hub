@@ -85,12 +85,12 @@ h2.panel-sub { margin-top: var(--ui-space-roomy); font-size: 18px; }
 .ld-top { display: flex; justify-content: space-between; gap: var(--ui-space-comfortable); font-size: 14px; color: var(--ui-ink); margin-bottom: var(--ui-space-snug); }
 .ld-pct { color: var(--ui-ink-soft); font-variant-numeric: tabular-nums; }
 
-.hint { font-size: 14px; color: var(--ui-ink-soft); margin: var(--ui-space-snug) 0 0; }
+.hint { font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--ui-ink-soft); margin: var(--ui-space-tight) 0 0; }
 .hint.bad { color: var(--ui-danger-text); }
 .hint.warn { color: var(--ui-warning-text); }
 .muted { color: var(--ui-ink-soft); font-size: 14px; }
 .good { color: var(--ui-success-text); }
-.lbl { display: block; font-size: 14px; color: var(--ui-ink-soft); margin: var(--ui-space-base) 0 var(--ui-space-tight); }
+.lbl { display: block; font-size: 15px; font-weight: 600; color: var(--ui-ink); margin: var(--ui-space-base) 0 var(--ui-space-tight); }
 .lbl.first { margin-top: 0; }
 
 /* Status and memory rows keep their height while values change. */
