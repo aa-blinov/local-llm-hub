@@ -48,3 +48,9 @@ def test_default_used_when_nothing_running_or_requested(monkeypatch, tmp_path):
     reg = load()
     result, _ = _sync(monkeypatch, tmp_path, FakeSupervisor(False, None))
     assert result["context"] == int(reg.default.get("ctx", 131072))
+
+
+def test_output_budget_allows_whole_files(monkeypatch, tmp_path):
+    _, written = _sync(monkeypatch, tmp_path, FakeSupervisor(False, None), requested=131072)
+    models = written["provider"]["local-hub"]["models"]
+    assert all(m["limit"]["output"] >= 32768 for m in models.values())

@@ -47,6 +47,9 @@ def status_config(reg: Registry) -> dict:
     }
 
 
+OUTPUT_TOKENS = 32768
+
+
 def sync_config(reg: Registry, sup, requested_ctx: int | None = None) -> dict:
     try:
         cfg = _load()
@@ -62,7 +65,9 @@ def sync_config(reg: Registry, sup, requested_ctx: int | None = None) -> dict:
             continue
         models[mid] = {
             "name": m.label,
-            "limit": {"context": int(ctx), "output": 8192},
+            # Agents write whole files in one tool call. At 8192 a long file was cut off mid-call, which
+            # the engine reports as a broken stream, so the output budget is generous.
+            "limit": {"context": int(ctx), "output": OUTPUT_TOKENS},
             # Recommended sampling for general and coding tasks (model cards); greedy decoding loops on some models.
             "options": sampling_params(m),
         }
